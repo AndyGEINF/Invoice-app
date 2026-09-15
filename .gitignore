@@ -1,0 +1,50 @@
+# --- Material de trabajo que NO se sube al repositorio ---
+# Herramientas del agente y de Spec Kit
+.claude/
+.specify/
+# Especificaciones, documentación y estrategia (se mantienen en local)
+specs/
+documentacion/
+Estrategia de empresa/
+
+# --- Sistema / editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# --- Secretos y entorno ---
+.env
+.env.*
+!.env.example
+
+# --- Laravel ---
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+/storage/*.key
+/storage/app/private/*
+/storage/app/public/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*
+!/storage/app/private/.gitignore
+!/storage/app/public/.gitignore
+auth.json
+.phpunit.result.cache
+.phpunit.cache/
+/coverage/
+
+# --- Builds y caches ---
+dist/
+build/
+__pycache__/
+*.pyc
+.venv/
+venv/
