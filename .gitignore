@@ -36,10 +36,19 @@ desktop.ini
 /bootstrap/cache/*
 !/storage/app/private/.gitignore
 !/storage/app/public/.gitignore
+/storage/pail
 auth.json
 .phpunit.result.cache
 .phpunit.cache/
 /coverage/
+*.log
+.phpactor.json
+/.fleet
+/.nova
+/.zed
+Homestead.json
+Homestead.yaml
+database/*.sqlite
 
 # --- Builds y caches ---
 dist/
