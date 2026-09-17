@@ -1,0 +1,49 @@
+# Control de versiones y material local
+.git/
+.github/
+.claude/
+.specify/
+specs/
+documentacion/
+Estrategia de empresa/
+
+# Dependencias y builds (se regeneran dentro de la imagen)
+node_modules/
+vendor/
+public/build/
+public/hot
+public/storage
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Estado de runtime
+storage/app/private/*
+storage/app/public/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+storage/pail
+bootstrap/cache/*.php
+
+# Tests y herramientas
+tests/
+coverage/
+.phpunit.cache/
+.phpunit.result.cache
+*.log
+
+# Docker
+docker/compose.yml
+Dockerfile*
+**/*.Dockerfile
+.dockerignore
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,93 @@
+# ---------------------------------------------------------------------------
+# INVOICE · entorno Docker
+#
+#   docker compose -f docker/compose.yml --env-file .env up -d --build
+#
+# AVISO: la aplicación no tiene login. El puerto web solo se publica en
+# 127.0.0.1. Para acceder desde otra máquina, pon delante un proxy con
+# contraseña o una VPN (docs/deploy.md).
+# ---------------------------------------------------------------------------
+
+name: invoice
+
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-production}
+  APP_KEY: ${APP_KEY:?Define APP_KEY en .env (php artisan key:generate --show)}
+  APP_DEBUG: ${APP_DEBUG:-false}
+  APP_URL: ${APP_URL:-http://localhost:8080}
+  APP_LOCALE: es
+  LOG_CHANNEL: stderr
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_DATABASE: ${DB_DATABASE:-invoice}
+  DB_USERNAME: ${DB_USERNAME:-invoice}
+  DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+  SESSION_DRIVER: file
+  CACHE_STORE: database
+  QUEUE_CONNECTION: database
+  INVOICE_DOCUMENTS_DISK: ${INVOICE_DOCUMENTS_DISK:-documents}
+  INVOICE_LOGOS_DISK: ${INVOICE_LOGOS_DISK:-logos}
+  MAIL_MAILER: ${MAIL_MAILER:-log}
+  MAIL_SCHEME: ${MAIL_SCHEME:-}
+  MAIL_HOST: ${MAIL_HOST:-}
+  MAIL_PORT: ${MAIL_PORT:-587}
+  MAIL_USERNAME: ${MAIL_USERNAME:-}
+  MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+  MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-facturas@example.com}
+  MAIL_FROM_NAME: ${MAIL_FROM_NAME:-INVOICE}
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-invoice}
+      POSTGRES_USER: ${DB_USERNAME:-invoice}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [internal]
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/app.Dockerfile
+    restart: unless-stopped
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      # Solo localhost: sin login, nunca publicar en 0.0.0.0.
+      - "127.0.0.1:${INVOICE_HTTP_PORT:-8080}:8080"
+    volumes:
+      - storage:/var/www/html/storage
+    networks: [internal]
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/worker.Dockerfile
+    restart: unless-stopped
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_started
+    volumes:
+      - storage:/var/www/html/storage
+    networks: [internal]
+
+volumes:
+  pgdata:
+  storage:
+
+networks:
+  internal:
