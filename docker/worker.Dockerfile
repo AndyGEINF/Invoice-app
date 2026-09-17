@@ -30,8 +30,9 @@ RUN apt-get update \
         chromium fonts-dejavu-core fonts-liberation nodejs npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" bcmath intl pdo_pgsql pgsql zip gd opcache pcntl \
-    && apt-get purge -y --auto-remove libicu-dev libpq-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
+# Las librerías -dev se mantienen: arrastran las de ejecución (libpq5, libzip4…)
+# que necesitan las extensiones; purgarlas rompe pdo_pgsql y zip.
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-invoice.ini
 
 WORKDIR /var/www/html
