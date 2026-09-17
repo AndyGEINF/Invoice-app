@@ -11,7 +11,16 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <testsuite name="Concurrency">
+            <directory>tests/Concurrency</directory>
+        </testsuite>
     </testsuites>
+    <groups>
+        <exclude>
+            <!-- Se ejecuta aparte con la opcion group=concurrency de artisan test -->
+            <group>concurrency</group>
+        </exclude>
+    </groups>
     <source>
         <include>
             <directory>app</directory>
@@ -23,9 +32,14 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- Tests contra PostgreSQL real: los triggers de inmutabilidad son parte
+             de lo que se prueba (constitución, principio VI). -->
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_DATABASE" value="invoice_test"/>
         <env name="DB_URL" value=""/>
+        <env name="FILESYSTEM_DISK" value="local"/>
+        <env name="INVOICE_DOCUMENTS_DISK" value="documents"/>
+        <env name="INVOICE_LOGOS_DISK" value="logos"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
