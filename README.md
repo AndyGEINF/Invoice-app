@@ -1,58 +1,75 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# INVOICE
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Facturas y presupuestos para un autónomo o una pequeña empresa de España.
 
-## About Laravel
+> ## ⚠️ Esta aplicación no tiene login
+>
+> INVOICE está pensada para **una sola empresa o persona** y no tiene cuentas de
+> usuario ni contraseña. Cualquiera que llegue a la dirección de la aplicación puede ver
+> y emitir facturas.
+>
+> - Ejecútala en tu equipo (`http://127.0.0.1:8000`) o en una red privada.
+> - Si necesitas acceder desde fuera, pon delante un proxy con contraseña o una VPN.
+>   Tienes ejemplos en [docs/deploy.md](docs/deploy.md).
+> - Nunca la publiques directamente en Internet.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Qué hace
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Configura tu nombre, tu empresa y tu logotipo, que aparecen en todas las facturas.
+- Gestiona clientes y un catálogo de productos y servicios.
+- Crea presupuestos, conviértelos en facturas y emite rectificativas.
+- Calcula IVA, recargo de equivalencia e IRPF con el redondeo que valida Hacienda.
+- Numera las facturas de forma correlativa y sin huecos, y las bloquea al emitir.
+- Genera el PDF y lo envía por email al cliente.
+- Marca las facturas como cobradas para ver de un vistazo qué está pendiente o vencido.
+  El cobro lo gestiona el cliente fuera de la aplicación.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Ámbito fiscal: España, territorio común. La preparación para VeriFactu está en el
+modelo de datos; el envío a la AEAT llegará en una fase posterior.
 
-## Learning Laravel
+## Requisitos
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP 8.4 con las extensiones `bcmath`, `intl`, `pdo_pgsql`, `fileinfo`, `gd` y `zip`
+- Composer 2
+- Node 22 y npm
+- PostgreSQL 17
+- Google Chrome o Chromium, para generar los PDF
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Puesta en marcha en local
 
 ```bash
-composer require laravel/boost --dev
+composer install
+npm install
 
-php artisan boost:install
+cp .env.example .env
+php artisan key:generate
+# Edita .env: datos de PostgreSQL, cuenta de correo y ruta de Chrome.
+
+php artisan migrate --seed
+php artisan storage:link
+
+npm run dev
+php artisan serve
+php artisan queue:work
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Abre `http://127.0.0.1:8000`. Lo primero que pide la aplicación es configurar el
+emisor: tu nombre, tu empresa (opcional), tu logotipo y tus datos fiscales.
 
-## Contributing
+Si prefieres Docker, consulta [docs/deploy.md](docs/deploy.md).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Tests
 
-## Code of Conduct
+Los tests usan una base PostgreSQL real llamada `invoice_test`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan test
+php artisan test --group=concurrency
+npm run lint
+npm run types
+```
 
-## Security Vulnerabilities
+## Ramas
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- `develop`: desarrollo. Cada tarea es un commit.
+- `main`: producción. Solo recibe versiones probadas.

@@ -2,6 +2,7 @@
 # Herramientas del agente y de Spec Kit
 .claude/
 .specify/
+CLAUDE.md
 # Especificaciones, documentación y estrategia (se mantienen en local)
 specs/
 documentacion/
