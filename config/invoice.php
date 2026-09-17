@@ -1,0 +1,77 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Configuración de dominio de INVOICE
+|--------------------------------------------------------------------------
+|
+| Valores fiscales y de negocio que usan el motor de impuestos, la emisión y
+| la interfaz. Los porcentajes van como cadena con dos decimales para no pasar
+| nunca por float (constitución, principio I).
+|
+*/
+
+return [
+
+    'tax' => [
+        // Tipos de IVA admitidos en territorio común.
+        'vat_rates' => ['21.00', '10.00', '4.00', '0.00'],
+
+        // Recargo de equivalencia asociado a cada tipo de IVA.
+        'surcharge_rates' => ['5.20', '1.40', '0.50', '0.00'],
+        'surcharge_by_vat_rate' => [
+            '21.00' => '5.20',
+            '10.00' => '1.40',
+            '4.00' => '0.50',
+            '0.00' => '0.00',
+        ],
+
+        // Tipos de retención de IRPF sugeridos (el emisor puede fijar otro por defecto).
+        'irpf_rates' => ['15.00', '7.00', '0.00'],
+
+        // Causas de exención (códigos AEAT E1–E6) y operación no sujeta.
+        // El texto se imprime en el PDF junto al desglose.
+        'exemption_codes' => [
+            'E1' => 'Operación exenta por el artículo 20 de la Ley 37/1992 del IVA',
+            'E2' => 'Operación exenta por el artículo 21 de la Ley 37/1992 del IVA',
+            'E3' => 'Operación exenta por el artículo 22 de la Ley 37/1992 del IVA',
+            'E4' => 'Operación exenta por los artículos 23 y 24 de la Ley 37/1992 del IVA',
+            'E5' => 'Operación exenta por el artículo 25 de la Ley 37/1992 del IVA',
+            'E6' => 'Operación exenta por otros motivos',
+            'NS' => 'Operación no sujeta al IVA',
+        ],
+    ],
+
+    'series' => [
+        // Relleno de ceros del número (F2026-0001).
+        'default_padding' => 4,
+
+        // Series que se crean en la instalación.
+        'defaults' => [
+            ['document_type' => 'invoice', 'code' => 'F', 'prefix' => 'F'],
+            ['document_type' => 'credit_note', 'code' => 'R', 'prefix' => 'R'],
+            ['document_type' => 'quote', 'code' => 'P', 'prefix' => 'P'],
+        ],
+    ],
+
+    'quote' => [
+        // Días de validez por defecto de un presupuesto.
+        'default_validity_days' => 30,
+    ],
+
+    'invoice' => [
+        // Importe a partir del cual una factura simplificada (F2) genera un aviso.
+        // Es un aviso, no un bloqueo: hay excepciones sectoriales.
+        'simplified_limit_cents' => 40000,
+
+        // Plazo de pago por defecto si el cliente no tiene uno.
+        'default_payment_terms_days' => 30,
+    ],
+
+    'issuer' => [
+        // Logotipo obligatorio para emitir.
+        'logo_max_kb' => 2048,
+        'logo_mimes' => ['png', 'jpg', 'jpeg', 'svg'],
+    ],
+
+];
