@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (PHP 8.4 · PostgreSQL 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: invoice_test
+          POSTGRES_USER: invoice
+          POSTGRES_PASSWORD: invoice
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U invoice -d invoice_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: invoice_test
+      DB_USERNAME: invoice
+      DB_PASSWORD: invoice
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, pdo_pgsql, pgsql, zip, gd, fileinfo, pcntl
+          coverage: none
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Caché de Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Instalar dependencias Node
+        run: npm ci
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Lint y tipos del frontend
+        run: |
+          npm run lint
+          npm run types
+
+      - name: Compilar assets
+        run: npm run build
+
+      - name: Migraciones
+        run: php artisan migrate --force
+
+      - name: Tests
+        run: php artisan test
+
+      - name: Tests de concurrencia (numeración correlativa, SC-003)
+        if: ${{ hashFiles('tests/Concurrency/**/*Test.php') != '' }}
+        run: php artisan test --group=concurrency
