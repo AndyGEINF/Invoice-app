@@ -68,6 +68,21 @@ return [
         'default_payment_terms_days' => 30,
     ],
 
+    'storage' => [
+        // Disco donde se guardan los PDFs emitidos ('documents' local o 's3').
+        'documents_disk' => env('INVOICE_DOCUMENTS_DISK', 'documents'),
+        // Disco público de logotipos.
+        'logos_disk' => env('INVOICE_LOGOS_DISK', 'logos'),
+    ],
+
+    'pdf' => [
+        // Browsershot / Chromium. Si están vacíos, Browsershot busca los binarios en el PATH.
+        'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
+        'node_binary' => env('BROWSERSHOT_NODE_BINARY'),
+        'npm_binary' => env('BROWSERSHOT_NPM_BINARY'),
+        'timeout' => (int) env('BROWSERSHOT_TIMEOUT', 60),
+    ],
+
     'issuer' => [
         // Logotipo obligatorio para emitir.
         'logo_max_kb' => 2048,

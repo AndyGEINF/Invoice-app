@@ -47,6 +47,28 @@ return [
             'report' => false,
         ],
 
+        // PDFs de documentos emitidos: privados, nunca servidos directamente.
+        'documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/documents'),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
+        // Logotipos del emisor: públicos, guardados por hash de contenido y
+        // nunca sobrescritos (los snapshots de facturas antiguas los referencian).
+        'logos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/logos'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/logos',
+            'visibility' => 'public',
+            'throw' => true,
+            'report' => true,
+        ],
+
+        // Opcional: almacenamiento S3 compatible. Para usarlo con los PDFs,
+        // poner INVOICE_DOCUMENTS_DISK=s3 en .env.
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
