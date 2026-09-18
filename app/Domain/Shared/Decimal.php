@@ -22,6 +22,9 @@ final readonly class Decimal implements Stringable
     /** Escala interna: suficiente para precios en milésimas por cantidades con 4 decimales. */
     public const int SCALE = 7;
 
+    /** Cero como cadena, para no repetir el literal en las operaciones. */
+    public const string ZERO = '0';
+
     private function __construct(public string $value) {}
 
     public static function of(string|int|self $value): self
@@ -41,7 +44,7 @@ final readonly class Decimal implements Stringable
 
     public static function zero(): self
     {
-        return new self(self::normalize('0'));
+        return new self(self::normalize(self::ZERO));
     }
 
     public function add(self $other): self
@@ -106,7 +109,7 @@ final readonly class Decimal implements Stringable
     }
 
     /** Redondeo fiscal a `$scale` decimales, mitad hacia arriba. */
-    public function round(int $scale = 2): string
+    public function round(int $scale = Rounding::CENTS_SCALE): string
     {
         return Rounding::halfUp($this, $scale);
     }
@@ -119,7 +122,7 @@ final readonly class Decimal implements Stringable
     /** Fija la escala y evita el cero negativo. */
     private static function normalize(string $raw): string
     {
-        $normalized = bcadd(ltrim($raw, '+'), '0', self::SCALE);
+        $normalized = bcadd(ltrim($raw, '+'), self::ZERO, self::SCALE);
 
         return Rounding::stripNegativeZero($normalized);
     }

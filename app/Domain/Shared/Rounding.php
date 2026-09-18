@@ -16,6 +16,12 @@ use App\Domain\Shared\Exceptions\InvalidDecimal;
  */
 final class Rounding
 {
+    /** Escala de los importes en unidades de moneda: dos decimales. */
+    public const int CENTS_SCALE = Currency::DECIMALS;
+
+    /** Escala de los importes ya expresados en unidades menores: sin decimales. */
+    public const int MINOR_UNIT_SCALE = 0;
+
     private function __construct() {}
 
     /**
@@ -24,9 +30,9 @@ final class Rounding
      * El resultado siempre trae exactamente `$scale` decimales, para poder
      * compararlo y guardarlo tal cual.
      */
-    public static function halfUp(Decimal|string $value, int $scale = 2): string
+    public static function halfUp(Decimal|string $value, int $scale = self::CENTS_SCALE): string
     {
-        if ($scale < 0) {
+        if ($scale < self::MINOR_UNIT_SCALE) {
             throw InvalidDecimal::negativeScale($scale);
         }
 
@@ -35,7 +41,7 @@ final class Rounding
         $rounded = bcround($decimal->value, $scale, \RoundingMode::HalfAwayFromZero);
 
         // bcround puede devolver menos decimales de los pedidos (p. ej. "42").
-        return self::stripNegativeZero(bcadd($rounded, '0', $scale));
+        return self::stripNegativeZero(bcadd($rounded, Decimal::ZERO, $scale));
     }
 
     /** Convierte "-0.00" en "0.00": el cero no lleva signo en una factura. */

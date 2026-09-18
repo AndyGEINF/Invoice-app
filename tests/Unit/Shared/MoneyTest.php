@@ -119,7 +119,7 @@ describe('Percentage', function () {
     });
 
     it('calcula su parte de un decimal y su complemento', function () {
-        expect(Percentage::of('21.00')->of(Decimal::of('150'))->value)->toBe('31.5000000')
+        expect(Percentage::of('21.00')->applyTo(Decimal::of('150'))->value)->toBe('31.5000000')
             ->and(Percentage::of('10.00')->complement()->value)->toBe('90.00')
             ->and(Percentage::of('10.00')->applyDiscountTo(Decimal::of('100'))->value)->toBe('90.0000000');
     });
