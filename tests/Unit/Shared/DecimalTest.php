@@ -1,5 +1,8 @@
 <?php
 
+// Modo estricto: Decimal::of() debe rechazar un float en vez de convertirlo.
+declare(strict_types=1);
+
 use App\Domain\Shared\Decimal;
 use App\Domain\Shared\Exceptions\InvalidDecimal;
 use App\Domain\Shared\Rounding;
