@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Documents\Enums\ExemptionCode;
+
 /*
 |--------------------------------------------------------------------------
 | Configuración de dominio de INVOICE
@@ -30,16 +32,12 @@ return [
         'irpf_rates' => ['15.00', '7.00', '0.00'],
 
         // Causas de exención (códigos AEAT E1–E6) y operación no sujeta.
-        // El texto se imprime en el PDF junto al desglose.
-        'exemption_codes' => [
-            'E1' => 'Operación exenta por el artículo 20 de la Ley 37/1992 del IVA',
-            'E2' => 'Operación exenta por el artículo 21 de la Ley 37/1992 del IVA',
-            'E3' => 'Operación exenta por el artículo 22 de la Ley 37/1992 del IVA',
-            'E4' => 'Operación exenta por los artículos 23 y 24 de la Ley 37/1992 del IVA',
-            'E5' => 'Operación exenta por el artículo 25 de la Ley 37/1992 del IVA',
-            'E6' => 'Operación exenta por otros motivos',
-            'NS' => 'Operación no sujeta al IVA',
-        ],
+        // El texto legal vive en el enum ExemptionCode para no duplicarlo.
+        'exemption_codes' => array_reduce(
+            ExemptionCode::cases(),
+            static fn (array $codes, ExemptionCode $code): array => $codes + [$code->value => $code->legalText()],
+            [],
+        ),
     ],
 
     'series' => [
