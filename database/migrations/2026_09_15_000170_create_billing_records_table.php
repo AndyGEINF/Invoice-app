@@ -72,11 +72,17 @@ return new class extends Migration
             CREATE TRIGGER billing_records_append_only
                 BEFORE UPDATE OR DELETE ON billing_records
                 FOR EACH ROW EXECUTE FUNCTION billing_records_append_only();
+
+            -- TRUNCATE no dispara los triggers de fila: hace falta uno de sentencia.
+            CREATE TRIGGER billing_records_no_truncate
+                BEFORE TRUNCATE ON billing_records
+                FOR EACH STATEMENT EXECUTE FUNCTION billing_records_append_only();
         SQL);
     }
 
     public function down(): void
     {
+        DB::unprepared('DROP TRIGGER IF EXISTS billing_records_no_truncate ON billing_records');
         DB::unprepared('DROP TRIGGER IF EXISTS billing_records_append_only ON billing_records');
         DB::unprepared('DROP FUNCTION IF EXISTS billing_records_append_only()');
         Schema::dropIfExists('billing_records');
