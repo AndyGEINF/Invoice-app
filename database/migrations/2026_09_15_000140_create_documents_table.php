@@ -55,10 +55,11 @@ return new class extends Migration
             $table->date('paid_at')->nullable();
             $table->string('paid_note', 200)->nullable();
 
-            // Clasificación fiscal y relaciones entre documentos.
+            // Clasificación fiscal y relaciones entre documentos. Las claves
+            // foráneas contra la propia tabla se añaden abajo, cuando ya existe.
             $table->string('invoice_type', 5)->nullable();
-            $table->foreignUuid('converted_from_id')->nullable()->constrained('documents')->nullOnDelete();
-            $table->foreignUuid('rectifies_id')->nullable()->constrained('documents')->restrictOnDelete();
+            $table->uuid('converted_from_id')->nullable();
+            $table->uuid('rectifies_id')->nullable();
             $table->char('rectification_type', 1)->nullable();
             $table->text('rectification_reason')->nullable();
 
@@ -80,6 +81,12 @@ return new class extends Migration
             $table->index(['type', 'status']);
             $table->index('customer_id');
             $table->index('issue_date');
+        });
+
+        // Presupuesto de origen y factura rectificada: se apuntan a documents.
+        Schema::table('documents', function (Blueprint $table) {
+            $table->foreign('converted_from_id')->references('id')->on('documents')->nullOnDelete();
+            $table->foreign('rectifies_id')->references('id')->on('documents')->restrictOnDelete();
         });
 
         // Numeración correlativa: red de seguridad frente a dos emisiones simultáneas.
