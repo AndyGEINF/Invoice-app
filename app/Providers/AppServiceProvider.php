@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Shared\Contracts\Clock;
+use App\Domain\Tax\SpanishTaxCalculator;
+use App\Domain\Tax\TaxCalculator;
 use App\Infrastructure\Time\SystemClock;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +22,7 @@ final class AppServiceProvider extends ServiceProvider
     /** @var array<class-string, class-string> */
     public array $singletons = [
         Clock::class => SystemClock::class,
+        TaxCalculator::class => SpanishTaxCalculator::class,
     ];
 
     public function register(): void
