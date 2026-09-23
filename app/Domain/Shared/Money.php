@@ -131,13 +131,19 @@ final readonly class Money implements Stringable
         return Rounding::halfUp($this->toDecimal(), $this->currency->decimals());
     }
 
-    /** Formato humano: "192,50 €" (con espacio duro antes del símbolo). */
+    /**
+     * Formato humano: "192,50 €" (con espacio duro antes del símbolo).
+     *
+     * Única conversión a float del dominio, y solo para mostrar: ICU no acepta
+     * cadenas, y un importe ya redondeado a céntimos se representa sin error
+     * hasta 2^53 céntimos. Nunca se opera con el resultado.
+     */
     public function format(string $locale = 'es-ES'): string
     {
         $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
 
         return $formatter->formatCurrency(
-            (float) $this->toDecimalString(),
+            (float) $this->toDecimalString(), // float-ok: solo presentación
             $this->currency->value
         );
     }
