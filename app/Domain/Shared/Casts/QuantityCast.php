@@ -22,7 +22,9 @@ final class QuantityCast implements CastsAttributes
             return null;
         }
 
-        return Quantity::of((string) $value);
+        // Con signo: las líneas de rectificativas pueden ser negativas. La regla
+        // de que solo ellas lo sean la aplican los casos de uso y un trigger.
+        return Quantity::signed((string) $value);
     }
 
     /** @return array<string, string|null> */
@@ -34,7 +36,7 @@ final class QuantityCast implements CastsAttributes
 
         $quantity = match (true) {
             $value instanceof Quantity => $value,
-            is_int($value), is_string($value) => Quantity::of($value),
+            is_int($value), is_string($value) => Quantity::signed($value),
             default => throw new InvalidArgumentException(
                 sprintf('El atributo %s espera una Quantity, un entero o una cadena decimal.', $key)
             ),
