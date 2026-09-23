@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -10,13 +12,12 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Instalación mínima: emisor vacío y series por defecto.
      *
-     * La aplicación no tiene usuarios: el InstallSeeder (emisor vacío y series
-     * por defecto) se registra aquí en T034.
+     * Para datos de demostración: php artisan db:seed --class=DemoSeeder
      */
     public function run(): void
     {
-        //
+        $this->call(InstallSeeder::class);
     }
 }

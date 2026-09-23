@@ -29,7 +29,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $id
  * @property string|null $name
  * @property string|null $company_name
- * @property string|null $logo_path
+ * @property string|null $logo_path Ruta relativa al disco de logotipos (config invoice.storage.logos_disk).
  * @property string|null $tax_id
  * @property TaxIdType|null $tax_id_type
  * @property Address|null $address

@@ -20,8 +20,8 @@ final class IssuerFactory extends Factory
 {
     protected $model = Issuer::class;
 
-    /** Logotipo de prueba que usan los tests y el seeder de demostración. */
-    public const string TEST_LOGO_PATH = 'logos/test-logo.png';
+    /** Logotipo de prueba, relativo al disco de logotipos. */
+    public const string TEST_LOGO_PATH = 'test-logo.png';
 
     public function definition(): array
     {
