@@ -8,7 +8,9 @@ use App\Domain\Documents\Concerns\IsTypedDocument;
 use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Enums\QuoteStatus;
 use Carbon\CarbonImmutable;
+use Database\Factories\QuoteFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * @property QuoteStatus $status
  */
+#[UseFactory(QuoteFactory::class)]
 final class Quote extends Document
 {
     use IsTypedDocument;

@@ -8,6 +8,8 @@ use App\Domain\Documents\Concerns\IsFiscalDocument;
 use App\Domain\Documents\Concerns\IsTypedDocument;
 use App\Domain\Documents\Enums\DocumentStatus;
 use App\Domain\Documents\Enums\DocumentType;
+use Database\Factories\InvoiceFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 
 /**
  * Factura.
@@ -18,6 +20,7 @@ use App\Domain\Documents\Enums\DocumentType;
  *
  * @property DocumentStatus $status
  */
+#[UseFactory(InvoiceFactory::class)]
 final class Invoice extends Document
 {
     use IsFiscalDocument;
