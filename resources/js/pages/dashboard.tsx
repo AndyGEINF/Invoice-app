@@ -1,13 +1,17 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 
 export default function Dashboard() {
+    const { issuer } = usePage().props;
+
     return (
         <>
             <Head title="Panel" />
-            <main className="mx-auto max-w-5xl px-4 py-10">
-                <h1 className="text-2xl font-semibold">INVOICE</h1>
-                <p className="mt-2 text-muted-foreground">Facturas y presupuestos.</p>
-            </main>
+            <h1 className="text-2xl font-semibold">Panel</h1>
+            <p className="mt-2 text-muted-foreground">
+                {issuer.isComplete
+                    ? `Bienvenido, ${issuer.name ?? issuer.legalName}.`
+                    : 'Empieza completando los datos de tu empresa para poder emitir facturas.'}
+            </p>
         </>
     );
 }
