@@ -44,7 +44,7 @@ return new class extends Migration
             $table->timestampsTz();
         });
 
-        DB::statement("ALTER TABLE issuer ADD CONSTRAINT issuer_singleton_check CHECK (singleton IS TRUE)");
+        DB::statement('ALTER TABLE issuer ADD CONSTRAINT issuer_singleton_check CHECK (singleton IS TRUE)');
         DB::statement("ALTER TABLE issuer ADD CONSTRAINT issuer_tax_id_type_check CHECK (tax_id_type IS NULL OR tax_id_type IN ('NIF', 'NIE', 'CIF'))");
         DB::statement("ALTER TABLE issuer ADD CONSTRAINT issuer_vat_regime_check CHECK (vat_regime IN ('general', 'surcharge', 'exempt'))");
         DB::statement('ALTER TABLE issuer ADD CONSTRAINT issuer_irpf_rate_check CHECK (default_irpf_rate >= 0 AND default_irpf_rate <= 100)');

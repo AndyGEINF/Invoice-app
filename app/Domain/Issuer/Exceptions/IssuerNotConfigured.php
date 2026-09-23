@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Issuer\Exceptions;
 
+use App\Domain\Issuer\Issuer;
 use DomainException;
 
 /**
@@ -17,7 +18,7 @@ final class IssuerNotConfigured extends DomainException
         parent::__construct($message);
     }
 
-    /** @param list<string> $missing Campos que faltan, con las claves de {@see \App\Domain\Issuer\Issuer::missing()}. */
+    /** @param list<string> $missing Campos que faltan, con las claves de {@see Issuer::missing()}. */
     public static function missing(array $missing): self
     {
         return new self(
