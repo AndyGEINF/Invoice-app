@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Documents\CreditNote;
+use App\Domain\Documents\Document;
+use App\Domain\Documents\DocumentLine;
+use App\Domain\Documents\DocumentTax;
+use App\Domain\Documents\Invoice;
+use App\Domain\Documents\Quote;
 use App\Domain\Shared\Contracts\Clock;
 use App\Domain\Tax\SpanishTaxCalculator;
 use App\Domain\Tax\TaxCalculator;
 use App\Infrastructure\Time\SystemClock;
+use App\Observers\DocumentChildObserver;
+use App\Observers\DocumentObserver;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -32,6 +40,20 @@ final class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        $this->registerImmutabilityObservers();
+    }
+
+    /**
+     * Los eventos de Eloquent van por clase concreta: el observador se registra en
+     * Document y en cada subclase para que ninguna quede sin proteger.
+     */
+    private function registerImmutabilityObservers(): void
+    {
+        foreach ([Document::class, Invoice::class, CreditNote::class, Quote::class] as $model) {
+            $model::observe(DocumentObserver::class);
+        }
+
+        DocumentLine::observe(DocumentChildObserver::class);
+        DocumentTax::observe(DocumentChildObserver::class);
     }
 }
