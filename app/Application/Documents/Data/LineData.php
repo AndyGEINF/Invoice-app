@@ -36,25 +36,45 @@ final readonly class LineData
         public ?string $id = null,
     ) {}
 
-    /** @param array<string, mixed> $line */
-    public static function fromArray(array $line): self
+    /**
+     * Con producto, los campos que la línea no trae (descripción, precio, IVA,
+     * exención, unidad, retención) se copian de él. Lo que el usuario escribió
+     * siempre prevalece: la línea es independiente del catálogo (decisión D4).
+     *
+     * @param  array<string, mixed>  $line
+     */
+    public static function fromArray(array $line, ?Product $product = null): self
     {
-        $exemption = $line['exemption_code'] ?? null;
+        $exemption = self::filled($line, 'exemption_code');
 
         return new self(
             position: (int) $line['position'],
-            description: (string) $line['description'],
+            description: self::filled($line, 'description') ?? $product?->lineDescription() ?? '',
             quantity: Quantity::signed((string) $line['quantity']),
-            unitPrice: UnitPrice::fromDecimal((string) $line['unit_price']),
-            discount: Percentage::of((string) ($line['discount_percent'] ?? Percentage::MIN)),
-            vatRate: Percentage::of((string) $line['vat_rate']),
-            surchargeRate: Percentage::of((string) ($line['surcharge_rate'] ?? Percentage::MIN)),
-            irpfApplies: (bool) ($line['irpf_applies'] ?? false),
-            exemptionCode: $exemption === null || $exemption === '' ? null : ExemptionCode::from((string) $exemption),
-            unit: (string) ($line['unit'] ?? Product::DEFAULT_UNIT),
-            productId: isset($line['product_id']) && $line['product_id'] !== '' ? (string) $line['product_id'] : null,
-            id: isset($line['id']) && $line['id'] !== '' ? (string) $line['id'] : null,
+            unitPrice: self::filled($line, 'unit_price') !== null
+                ? UnitPrice::fromDecimal((string) $line['unit_price'])
+                : ($product?->unit_price ?? UnitPrice::zero()),
+            discount: Percentage::of(self::filled($line, 'discount_percent') ?? Percentage::MIN),
+            vatRate: self::filled($line, 'vat_rate') !== null
+                ? Percentage::of((string) $line['vat_rate'])
+                : ($product?->vat_rate ?? Percentage::zero()),
+            surchargeRate: Percentage::of(self::filled($line, 'surcharge_rate') ?? Percentage::MIN),
+            irpfApplies: array_key_exists('irpf_applies', $line)
+                ? (bool) $line['irpf_applies']
+                : ($product?->irpf_applicable ?? false),
+            exemptionCode: $exemption !== null ? ExemptionCode::from($exemption) : $product?->exemption_code,
+            unit: self::filled($line, 'unit') ?? $product?->unit ?? Product::DEFAULT_UNIT,
+            productId: self::filled($line, 'product_id'),
+            id: self::filled($line, 'id'),
         );
+    }
+
+    /** @param array<string, mixed> $line */
+    private static function filled(array $line, string $key): ?string
+    {
+        $value = $line[$key] ?? null;
+
+        return $value === null || $value === '' ? null : (string) $value;
     }
 
     /**

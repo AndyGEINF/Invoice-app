@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Documents\Data;
 
+use App\Domain\Catalog\Product;
 use App\Domain\Shared\Currency;
 use App\Domain\Shared\Percentage;
 use Carbon\CarbonImmutable;
@@ -34,12 +35,20 @@ final readonly class DraftData
     public static function fromArray(array $form): self
     {
         /** @var list<array<string, mixed>> $lines */
-        $lines = $form['lines'] ?? [];
+        $lines = array_values($form['lines'] ?? []);
+
+        $products = Product::query()
+            ->whereKey(array_filter(array_column($lines, 'product_id')))
+            ->get()
+            ->keyBy('id');
 
         return new self(
             customerId: self::stringOrNull($form['customer_id'] ?? null),
             seriesId: self::stringOrNull($form['series_id'] ?? null),
-            lines: array_values(array_map(LineData::fromArray(...), $lines)),
+            lines: array_map(
+                static fn (array $line): LineData => LineData::fromArray($line, $products->get($line['product_id'] ?? null)),
+                $lines,
+            ),
             currency: Currency::from((string) ($form['currency'] ?? Currency::EUR->value)),
             globalDiscount: Percentage::of((string) ($form['global_discount_percent'] ?? Percentage::MIN)),
             irpfRate: Percentage::of((string) ($form['irpf_rate'] ?? Percentage::MIN)),
