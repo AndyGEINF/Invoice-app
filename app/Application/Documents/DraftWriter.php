@@ -36,9 +36,12 @@ final readonly class DraftWriter
 
     public function write(Document $document, DraftData $data): void
     {
-        $this->validate($document, $data);
+        // La serie se resuelve una sola vez: la usan la validación y el volcado.
+        $series = $this->seriesFor($document, $data);
 
-        $document->fill($this->documentAttributes($document, $data));
+        $this->validate($document, $data, $series);
+
+        $document->fill($this->documentAttributes($document, $data, $series));
         $document->save();
 
         $this->syncLines($document, $data->lines);
@@ -46,7 +49,7 @@ final readonly class DraftWriter
         ($this->recalculate)($document);
     }
 
-    private function validate(Document $document, DraftData $data): void
+    private function validate(Document $document, DraftData $data, ?Series $series): void
     {
         $errors = [];
 
@@ -60,8 +63,6 @@ final readonly class DraftWriter
             }
         }
 
-        $series = $this->seriesFor($document, $data);
-
         if ($series === null) {
             $errors['series_id'] = 'No hay ninguna serie para este tipo de documento.';
         } elseif ($series->document_type !== $document->type) {
@@ -72,6 +73,7 @@ final readonly class DraftWriter
 
         $issuerExempt = Issuer::current()->vat_regime->isExempt();
         $allowsNegatives = $document instanceof CreditNote;
+        $existingProducts = $this->existingProductIds($data->lines);
 
         foreach ($data->lines as $index => $line) {
             $field = "lines.{$index}";
@@ -88,7 +90,7 @@ final readonly class DraftWriter
                 $errors["{$field}.exemption_code"] = 'Una línea sin IVA necesita la causa de exención o marcarse como no sujeta.';
             }
 
-            if ($line->productId !== null && ! $this->productExists($line)) {
+            if ($line->productId !== null && ! isset($existingProducts[$line->productId])) {
                 $errors["{$field}.product_id"] = 'El producto no existe.';
             }
         }
@@ -99,10 +101,10 @@ final readonly class DraftWriter
     }
 
     /** @return array<string, mixed> */
-    private function documentAttributes(Document $document, DraftData $data): array
+    private function documentAttributes(Document $document, DraftData $data, ?Series $series): array
     {
         $attributes = $data->toAttributes();
-        $attributes['series_id'] = $this->seriesFor($document, $data)?->id;
+        $attributes['series_id'] = $series?->id;
 
         if ($document instanceof Quote) {
             $issueDate = $data->issueDate ?? $document->issue_date ?? $this->clock->today();
@@ -162,8 +164,27 @@ final readonly class DraftWriter
         $document->unsetRelation('lines');
     }
 
-    private function productExists(LineData $line): bool
+    /**
+     * Productos de las líneas que existen, en una sola consulta en vez de una
+     * por línea.
+     *
+     * @param  list<LineData>  $lines
+     * @return array<string, true>
+     */
+    private function existingProductIds(array $lines): array
     {
-        return Product::query()->whereKey($line->productId)->exists();
+        $ids = array_values(array_unique(array_filter(
+            array_map(static fn (LineData $line): ?string => $line->productId, $lines),
+            static fn (?string $id): bool => $id !== null,
+        )));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return array_fill_keys(
+            Product::query()->whereKey($ids)->pluck('id')->map(static fn (mixed $id): string => (string) $id)->all(),
+            true,
+        );
     }
 }

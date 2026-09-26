@@ -140,7 +140,10 @@ final readonly class Money implements Stringable
      */
     public function format(string $locale = 'es-ES'): string
     {
-        $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
+        // Crear un NumberFormatter carga datos de ICU: se reutiliza uno por locale
+        // (un listado formatea cientos de importes).
+        static $formatters = [];
+        $formatter = $formatters[$locale] ??= new NumberFormatter($locale, NumberFormatter::CURRENCY);
 
         return $formatter->formatCurrency(
             (float) $this->toDecimalString(), // float-ok: solo presentación

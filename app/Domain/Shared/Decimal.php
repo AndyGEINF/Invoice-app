@@ -83,24 +83,27 @@ final readonly class Decimal implements Stringable
         return $this->compare($other) === 0;
     }
 
+    // Se compara con el literal: construir Decimal::zero() en cada llamada
+    // costaba una normalización bcmath por comparación.
+
     public function isZero(): bool
     {
-        return $this->compare(self::zero()) === 0;
+        return bccomp($this->value, self::ZERO, self::SCALE) === 0;
     }
 
     public function isNegative(): bool
     {
-        return $this->compare(self::zero()) < 0;
+        return bccomp($this->value, self::ZERO, self::SCALE) < 0;
     }
 
     public function isPositive(): bool
     {
-        return $this->compare(self::zero()) > 0;
+        return bccomp($this->value, self::ZERO, self::SCALE) > 0;
     }
 
     public function negate(): self
     {
-        return self::zero()->sub($this);
+        return new self(bcsub(self::ZERO, $this->value, self::SCALE));
     }
 
     public function abs(): self

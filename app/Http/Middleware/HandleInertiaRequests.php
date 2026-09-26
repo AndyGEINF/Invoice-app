@@ -58,6 +58,8 @@ final class HandleInertiaRequests extends Middleware
     {
         $issuer = Issuer::current();
         $logoPath = $issuer->logo_path;
+        // missing() valida NIF y dirección: se calcula una vez y se reutiliza.
+        $missing = $issuer->missing();
 
         return [
             'name' => $issuer->name,
@@ -66,8 +68,8 @@ final class HandleInertiaRequests extends Middleware
             'logoUrl' => $logoPath !== null && $logoPath !== ''
                 ? Storage::disk(config('invoice.storage.logos_disk'))->url($logoPath)
                 : null,
-            'isComplete' => $issuer->isComplete(),
-            'missing' => $issuer->missing(),
+            'isComplete' => $missing === [],
+            'missing' => $missing,
         ];
     }
 }
