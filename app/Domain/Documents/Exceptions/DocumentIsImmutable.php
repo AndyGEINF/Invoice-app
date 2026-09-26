@@ -47,6 +47,11 @@ final class DocumentIsImmutable extends DomainException
         ));
     }
 
+    public static function alreadyIssued(string $document): self
+    {
+        return new self(sprintf('El documento %s ya está emitido.', $document));
+    }
+
     public static function invalidTransition(string $document, string $from, string $to): self
     {
         return new self(sprintf(
