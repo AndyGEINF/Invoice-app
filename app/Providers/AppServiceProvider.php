@@ -24,6 +24,10 @@ use Illuminate\Support\ServiceProvider;
  * El dominio solo conoce interfaces; aquí se decide qué implementación usa cada
  * entorno (constitución, principio III). Los adaptadores de PDF, almacenamiento
  * y VIES se registran cuando se implementan (T074, T086).
+ *
+ * Los listeners de app/Listeners (p. ej. RecordDocumentEvent) no se registran
+ * aquí: Laravel los descubre por el tipo de su método handle, y registrarlos
+ * también a mano los ejecutaría dos veces.
  */
 final class AppServiceProvider extends ServiceProvider
 {
