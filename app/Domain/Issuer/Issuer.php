@@ -61,6 +61,14 @@ final class Issuer extends Model
 
     public const string MISSING_ADDRESS = 'address';
 
+    /** Cómo se nombra cada dato que falta en los mensajes al usuario. */
+    public const array MISSING_LABELS = [
+        self::MISSING_NAME => 'nombre',
+        self::MISSING_LOGO => 'logotipo',
+        self::MISSING_TAX_ID => 'NIF',
+        self::MISSING_ADDRESS => 'dirección',
+    ];
+
     protected $table = 'issuer';
 
     protected $fillable = [

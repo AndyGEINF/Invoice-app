@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\DomainErrors;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,5 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Reglas de negocio (emisor incompleto, factura inmutable, fechas…) → 422
+        // con errors.domain; nunca un 500 (contracts/web-routes.md).
+        $exceptions->map(DomainException::class, DomainErrors::toValidation(...));
     })->create();
