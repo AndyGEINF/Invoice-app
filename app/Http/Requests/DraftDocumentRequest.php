@@ -62,7 +62,7 @@ final class DraftDocumentRequest extends FormRequest
 
             'lines' => ['present', 'array', 'max:'.self::MAX_LINES],
             'lines.*.id' => ['nullable', 'uuid'],
-            'lines.*.position' => ['required', 'integer', 'min:1'],
+            'lines.*.position' => ['required', 'integer', 'min:1', 'distinct'],
             'lines.*.product_id' => ['nullable', 'uuid', Rule::exists('products', 'id')],
             'lines.*.description' => ['required_without:lines.*.product_id', 'nullable', 'string', 'max:'.self::MAX_DESCRIPTION_LENGTH],
             'lines.*.quantity' => ['required', 'regex:'.self::QUANTITY_PATTERN],

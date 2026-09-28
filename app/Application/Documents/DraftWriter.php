@@ -74,9 +74,15 @@ final readonly class DraftWriter
         $issuerExempt = Issuer::current()->vat_regime->isExempt();
         $allowsNegatives = $document instanceof CreditNote;
         $existingProducts = $this->existingProductIds($data->lines);
+        $positions = [];
 
         foreach ($data->lines as $index => $line) {
             $field = "lines.{$index}";
+
+            if (isset($positions[$line->position])) {
+                $errors["{$field}.position"] = 'Hay dos líneas en la misma posición.';
+            }
+            $positions[$line->position] = true;
 
             if (trim($line->description) === '') {
                 $errors["{$field}.description"] = 'La línea necesita una descripción.';
@@ -136,29 +142,50 @@ final readonly class DraftWriter
      * que el formulario ya no trae. Así las líneas conservan su identidad entre
      * ediciones.
      *
+     * La posición es única por documento, así que el orden de las escrituras
+     * importa: primero se borran las líneas quitadas y se apartan a posiciones
+     * temporales las que cambian de sitio; solo entonces se escriben las
+     * posiciones finales. Si no, reordenar o sustituir una línea chocaría con
+     * la posición que aún ocupa otra.
+     *
      * @param  list<LineData>  $lines
      */
     private function syncLines(Document $document, array $lines): void
     {
         /** @var array<string, DocumentLine> $existing */
         $existing = $document->lines()->get()->keyBy('id')->all();
-        $kept = [];
+
+        /** @var array<string, LineData> $updates */
+        $updates = [];
+        $creates = [];
 
         foreach ($lines as $line) {
-            $model = $line->id !== null ? ($existing[$line->id] ?? null) : null;
-
-            if ($model === null) {
-                $document->lines()->create($line->toAttributes());
-
-                continue;
+            if ($line->id !== null && isset($existing[$line->id])) {
+                $updates[$line->id] = $line;
+            } else {
+                $creates[] = $line;
             }
-
-            $model->fill($line->toAttributes())->save();
-            $kept[$model->id] = true;
         }
 
-        foreach (array_diff_key($existing, $kept) as $removed) {
+        foreach (array_diff_key($existing, $updates) as $removed) {
             $removed->delete();
+        }
+
+        $temporaryPosition = 0;
+
+        foreach ($updates as $id => $line) {
+            if ($existing[$id]->position !== $line->position) {
+                $existing[$id]->position = --$temporaryPosition;
+                $existing[$id]->save();
+            }
+        }
+
+        foreach ($updates as $id => $line) {
+            $existing[$id]->fill($line->toAttributes())->save();
+        }
+
+        foreach ($creates as $line) {
+            $document->lines()->create($line->toAttributes());
         }
 
         $document->unsetRelation('lines');
