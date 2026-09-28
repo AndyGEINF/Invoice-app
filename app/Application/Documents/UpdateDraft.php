@@ -7,7 +7,6 @@ namespace App\Application\Documents;
 use App\Application\Documents\Data\DraftData;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\Enums\DocumentEventType;
-use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Exceptions\DocumentIsImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -25,9 +24,7 @@ final readonly class UpdateDraft
             $document = $document->newQuery()->lockForUpdate()->findOrFail($document->getKey());
 
             if (! $document->isEditable()) {
-                throw $document->type === DocumentType::Quote
-                    ? DocumentIsImmutable::quoteConverted($document->full_number ?? $document->id)
-                    : DocumentIsImmutable::cannotChange($document->full_number ?? $document->id, ['lines']);
+                throw DocumentIsImmutable::notEditable($document);
             }
 
             $this->writer->write($document, $data);

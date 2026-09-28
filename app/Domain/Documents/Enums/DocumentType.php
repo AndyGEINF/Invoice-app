@@ -35,6 +35,18 @@ enum DocumentType: string
         };
     }
 
+    /** Inverso de {@see routeSegment()}: null si el segmento no es un tipo. */
+    public static function tryFromRouteSegment(string $segment): ?self
+    {
+        foreach (self::cases() as $type) {
+            if ($type->routeSegment() === $segment) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
+
     /** Los documentos fiscales son inmutables una vez emitidos. */
     public function isFiscal(): bool
     {

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Documents\Exceptions;
 
+use App\Domain\Documents\Document;
+use App\Domain\Documents\Enums\DocumentType;
 use DomainException;
 
 /**
@@ -45,6 +47,16 @@ final class DocumentIsImmutable extends DomainException
             'El presupuesto %s ya se convirtió en factura y solo se puede consultar.',
             $document
         ));
+    }
+
+    /** El documento ya no admite edición: emitido, o presupuesto convertido. */
+    public static function notEditable(Document $document): self
+    {
+        $label = $document->full_number ?? $document->id;
+
+        return $document->type === DocumentType::Quote
+            ? self::quoteConverted($label)
+            : self::alreadyIssued($label);
     }
 
     public static function alreadyIssued(string $document): self

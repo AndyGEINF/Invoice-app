@@ -160,6 +160,16 @@ class Document extends Model
         return $model;
     }
 
+    /**
+     * Clase concreta de un tipo, para consultar solo documentos de ese tipo.
+     *
+     * @return class-string<Document>
+     */
+    public static function classFor(DocumentType $type): string
+    {
+        return static::CLASS_BY_TYPE[$type->value];
+    }
+
     /** @return HasMany<DocumentLine, $this> */
     public function lines(): HasMany
     {

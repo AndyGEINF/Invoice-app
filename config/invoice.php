@@ -19,6 +19,9 @@ return [
         // Tipos de IVA admitidos en territorio común.
         'vat_rates' => ['21.00', '10.00', '4.00', '0.00'],
 
+        // Tipo que propone una línea nueva.
+        'default_vat_rate' => '21.00',
+
         // Recargo de equivalencia asociado a cada tipo de IVA.
         'surcharge_rates' => ['5.20', '1.40', '0.50', '0.00'],
         'surcharge_by_vat_rate' => [

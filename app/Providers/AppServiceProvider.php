@@ -8,6 +8,7 @@ use App\Domain\Documents\CreditNote;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentLine;
 use App\Domain\Documents\DocumentTax;
+use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Invoice;
 use App\Domain\Documents\Quote;
 use App\Domain\Shared\Contracts\Clock;
@@ -16,6 +17,8 @@ use App\Domain\Tax\TaxCalculator;
 use App\Infrastructure\Time\SystemClock;
 use App\Observers\DocumentChildObserver;
 use App\Observers\DocumentObserver;
+use Illuminate\Routing\Route as RoutingRoute;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -45,6 +48,29 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerImmutabilityObservers();
+        $this->registerDocumentRouteBindings();
+    }
+
+    /**
+     * `{type}` (invoices, credit-notes…) llega como DocumentType, y `{document}`
+     * solo encuentra documentos de ese tipo: /credit-notes/{id-de-factura} da 404.
+     *
+     * Van aquí y no en routes/web.php para que sobrevivan a `route:cache`.
+     */
+    private function registerDocumentRouteBindings(): void
+    {
+        Route::bind('type', static fn (string $segment): DocumentType => DocumentType::tryFromRouteSegment($segment) ?? abort(404));
+
+        Route::bind('document', static function (string $id, RoutingRoute $route): Document {
+            $type = $route->parameter('type');
+            $type = $type instanceof DocumentType ? $type : DocumentType::tryFromRouteSegment((string) $type);
+
+            if ($type === null) {
+                abort(404);
+            }
+
+            return Document::classFor($type)::query()->findOrFail($id);
+        });
     }
 
     /**
