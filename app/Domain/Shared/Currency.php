@@ -31,6 +31,15 @@ enum Currency: string
         return self::MINOR_UNITS;
     }
 
+    /** Símbolo que acompaña a los importes impresos. */
+    public function symbol(): string
+    {
+        return match ($this) {
+            self::EUR => '€',
+            self::USD => '$',
+        };
+    }
+
     public static function default(): self
     {
         return self::EUR;
