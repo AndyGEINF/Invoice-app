@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { FileText, FileMinus, FileSignature, LayoutDashboard, Package, Settings, Users } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 
+import { FlashMessages } from '@/components/FlashMessages';
 import { IssuerIncompleteBanner } from '@/components/IssuerIncompleteBanner';
 import { cn } from '@/lib/utils';
 
@@ -79,7 +80,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             <IssuerIncompleteBanner />
 
-            <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
+            <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+                <FlashMessages />
+                {children}
+            </main>
         </div>
     );
 }
