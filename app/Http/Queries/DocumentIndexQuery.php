@@ -109,17 +109,19 @@ final readonly class DocumentIndexQuery
 
     /**
      * Totales de todo lo filtrado (no solo de la página): número de documentos,
-     * suma de los emitidos y suma de lo pendiente de cobro.
+     * suma de los emitidos, lo pendiente de cobro aún en plazo y lo vencido.
+     * Pendiente y vencido no se solapan: juntos son todo lo no cobrado.
      *
      * @param  Builder<covariant Document>  $filtered
      * @return array<string, int|string>
      */
-    public static function totals(Builder $filtered): array
+    public static function totals(Builder $filtered, CarbonImmutable $today): array
     {
         $issued = (clone $filtered)->where('status', '<>', DocumentStatus::Draft->value);
 
         $sumTotal = Money::fromCents((int) (clone $issued)->sum('total'));
-        $sumPending = Money::fromCents((int) (clone $issued)->whereNull('paid_at')->sum('total'));
+        $sumPending = Money::fromCents((int) (clone $filtered)->unpaid($today)->sum('total'));
+        $sumOverdue = Money::fromCents((int) (clone $filtered)->overdue($today)->sum('total'));
 
         return [
             'count' => (clone $filtered)->count(),
@@ -127,6 +129,8 @@ final readonly class DocumentIndexQuery
             'sum_total_formatted' => $sumTotal->format(),
             'sum_pending' => $sumPending->cents,
             'sum_pending_formatted' => $sumPending->format(),
+            'sum_overdue' => $sumOverdue->cents,
+            'sum_overdue_formatted' => $sumOverdue->format(),
         ];
     }
 

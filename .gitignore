@@ -58,3 +58,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Capturas y registros del servidor MCP de Playwright (depuración local)
+/.playwright-mcp/

@@ -75,6 +75,20 @@ export interface DocumentTotals {
     sum_total_formatted: string;
     sum_pending: number;
     sum_pending_formatted: string;
+    sum_overdue: number;
+    sum_overdue_formatted: string;
+}
+
+/** Tarjeta de aviso del listado: cuántos, cuánto suman y los más urgentes. */
+export interface AlertGroup {
+    count: number;
+    sum_formatted: string;
+    items: DocumentRow[];
+}
+
+export interface DocumentAlerts {
+    overdue: AlertGroup;
+    drafts: AlertGroup;
 }
 
 export interface TaxRow {

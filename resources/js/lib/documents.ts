@@ -7,6 +7,20 @@ export const DOCUMENT_LIST_TITLES: Record<DocumentTypeValue, string> = {
     credit_note: 'Rectificativas',
 };
 
+/** Nombre en singular y plural para los contadores ("1 factura", "5 facturas"). */
+const COUNT_NOUNS: Record<DocumentTypeValue, [string, string]> = {
+    quote: ['presupuesto', 'presupuestos'],
+    invoice: ['factura', 'facturas'],
+    credit_note: ['rectificativa', 'rectificativas'],
+};
+
+export function countLabel(type: DocumentTypeValue, count: number, suffix = ''): string {
+    const [singular, plural] = COUNT_NOUNS[type];
+    const noun = count === 1 ? singular : plural;
+
+    return `${count} ${noun}${suffix ? ` ${suffix}` : ''}`;
+}
+
 /**
  * Texto del botón de alta. Las rectificativas no tienen alta propia: nacen de
  * la factura que corrigen.
