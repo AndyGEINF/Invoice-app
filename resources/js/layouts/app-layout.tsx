@@ -1,9 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { FileText, FileMinus, FileSignature, LayoutDashboard, Package, Settings, Users } from 'lucide-react';
+import { FileMinus, FileSignature, FileText, LayoutDashboard, Menu, Package, Settings, Users } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 
 import { FlashMessages } from '@/components/FlashMessages';
 import { IssuerIncompleteBanner } from '@/components/IssuerIncompleteBanner';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -12,78 +15,213 @@ interface NavItem {
     icon: ComponentType<{ className?: string }>;
 }
 
-const NAVIGATION: NavItem[] = [
-    { label: 'Panel', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Presupuestos', href: '/quotes', icon: FileSignature },
-    { label: 'Facturas', href: '/invoices', icon: FileText },
-    { label: 'Rectificativas', href: '/credit-notes', icon: FileMinus },
-    { label: 'Clientes', href: '/customers', icon: Users },
-    { label: 'Catálogo', href: '/products', icon: Package },
-    { label: 'Ajustes', href: '/settings/issuer', icon: Settings },
-];
+const DASHBOARD: NavItem = { label: 'Panel', href: '/dashboard', icon: LayoutDashboard };
+const QUOTES: NavItem = { label: 'Presupuestos', href: '/quotes', icon: FileSignature };
+const INVOICES: NavItem = { label: 'Facturas', href: '/invoices', icon: FileText };
+const CREDIT_NOTES: NavItem = { label: 'Rectificativas', href: '/credit-notes', icon: FileMinus };
+const CUSTOMERS: NavItem = { label: 'Clientes', href: '/customers', icon: Users };
+const PRODUCTS: NavItem = { label: 'Catálogo', href: '/products', icon: Package };
+const SETTINGS: NavItem = { label: 'Ajustes', href: '/settings/issuer', icon: Settings };
+
+/** Barra lateral (escritorio). */
+const SIDEBAR: NavItem[] = [DASHBOARD, QUOTES, INVOICES, CREDIT_NOTES, CUSTOMERS, PRODUCTS];
+
+/** Barra inferior (móvil): lo más usado; el resto en "Más". */
+const BOTTOM_BAR: NavItem[] = [{ ...DASHBOARD, label: 'Inicio' }, INVOICES, QUOTES, CUSTOMERS];
+const MORE: NavItem[] = [CREDIT_NOTES, PRODUCTS, SETTINGS];
 
 function isActive(currentUrl: string, href: string): boolean {
     const path = currentUrl.split('?')[0] ?? '';
 
-    return path === href || path.startsWith(`${href}/`) || (href === '/settings/issuer' && path.startsWith('/settings'));
+    return path === href || path.startsWith(`${href}/`) || (href === SETTINGS.href && path.startsWith('/settings'));
 }
 
 /**
- * Estructura común de todas las páginas: cabecera con el emisor, navegación y
- * aviso de datos incompletos.
+ * Estructura común: barra lateral de iconos en escritorio,
+ * barra inferior tipo app en móvil, aviso de datos del emisor incompletos y
+ * mensajes de la última acción.
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
-    const { url, props } = usePage();
-    const { issuer, appName } = props;
+    const { url } = usePage();
 
     return (
-        <div className="flex min-h-screen flex-col bg-background">
-            <header className="border-b bg-card">
-                <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-                    {issuer.logoUrl ? (
-                        <img src={issuer.logoUrl} alt="" className="h-8 max-w-32 object-contain" />
-                    ) : null}
-                    <div className="min-w-0">
-                        <p className="truncate font-semibold">{issuer.legalName ?? appName}</p>
-                        {issuer.companyName && issuer.name ? (
-                            <p className="truncate text-xs text-muted-foreground">{issuer.name}</p>
-                        ) : null}
-                    </div>
+        <TooltipProvider delayDuration={200}>
+            <div className="min-h-screen bg-background">
+                <DesktopSidebar url={url} />
+                <MobileTopBar />
+
+                <div className="md:pl-16">
+                    <IssuerIncompleteBanner />
+                    <main className="mx-auto w-full max-w-7xl px-4 pt-6 pb-24 md:px-8 md:pb-10">
+                        <FlashMessages />
+                        {children}
+                    </main>
                 </div>
 
-                <nav aria-label="Navegación principal" className="mx-auto max-w-6xl overflow-x-auto px-2">
-                    <ul className="flex gap-1">
-                        {NAVIGATION.map(({ label, href, icon: Icon }) => {
-                            const active = isActive(url, href);
+                <MobileBottomBar url={url} />
+            </div>
+        </TooltipProvider>
+    );
+}
+
+function AppMark() {
+    return (
+        <Link href={DASHBOARD.href} aria-label="Ir al panel" className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <FileText className="size-5" />
+        </Link>
+    );
+}
+
+/** Inicial o logotipo del emisor; lleva a sus datos. */
+function IssuerAvatar({ className }: { className?: string }) {
+    const { issuer, appName } = usePage().props;
+    const name = issuer.legalName ?? appName;
+
+    return (
+        <Link
+            href={SETTINGS.href}
+            aria-label={`Datos de ${name}`}
+            className={cn('relative flex size-9 items-center justify-center overflow-hidden rounded-full border bg-card text-sm font-semibold text-primary', className)}
+        >
+            {issuer.logoUrl ? <img src={issuer.logoUrl} alt="" className="size-full object-contain p-1" /> : name.charAt(0).toUpperCase()}
+            <span
+                aria-hidden
+                className={cn('absolute right-0 bottom-0 size-2.5 rounded-full border-2 border-card', issuer.isComplete ? 'bg-success' : 'bg-warning')}
+            />
+        </Link>
+    );
+}
+
+function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
+    const Icon = item.icon;
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Link
+                    href={item.href}
+                    aria-label={item.label}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                        'flex size-10 items-center justify-center rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        active ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-muted hover:text-foreground',
+                    )}
+                >
+                    <Icon className="size-5" />
+                </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">{item.label}</TooltipContent>
+        </Tooltip>
+    );
+}
+
+function DesktopSidebar({ url }: { url: string }) {
+    const { issuer, appName } = usePage().props;
+
+    return (
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-16 flex-col items-center border-r border-sidebar-border bg-sidebar py-4 md:flex">
+            <AppMark />
+
+            <nav aria-label="Navegación principal" className="mt-6 flex flex-1 flex-col items-center gap-1.5">
+                {SIDEBAR.map((item) => (
+                    <SidebarLink key={item.href} item={item} active={isActive(url, item.href)} />
+                ))}
+            </nav>
+
+            <div className="flex flex-col items-center gap-1.5">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span>
+                            <ThemeToggle />
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Tema</TooltipContent>
+                </Tooltip>
+                <SidebarLink item={SETTINGS} active={isActive(url, SETTINGS.href)} />
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span className="mt-2">
+                            <IssuerAvatar />
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{issuer.legalName ?? appName}</TooltipContent>
+                </Tooltip>
+            </div>
+        </aside>
+    );
+}
+
+function MobileTopBar() {
+    const { issuer, appName } = usePage().props;
+
+    return (
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card/95 px-4 backdrop-blur md:hidden">
+            <AppMark />
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold">{issuer.legalName ?? appName}</p>
+            <IssuerAvatar />
+        </header>
+    );
+}
+
+function MobileBottomBar({ url }: { url: string }) {
+    const moreActive = MORE.some((item) => isActive(url, item.href));
+
+    return (
+        <nav
+            aria-label="Navegación principal"
+            className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        >
+            {BOTTOM_BAR.map((item) => (
+                <BottomBarLink key={item.href} item={item} active={isActive(url, item.href)} />
+            ))}
+
+            <Sheet>
+                <SheetTrigger className={cn('flex flex-col items-center gap-0.5 py-2 text-[11px]', moreActive ? 'text-primary' : 'text-muted-foreground')}>
+                    <Menu className="size-5" />
+                    Más
+                </SheetTrigger>
+                <SheetContent side="bottom" className="rounded-t-2xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+                    <SheetHeader>
+                        <SheetTitle>Más</SheetTitle>
+                    </SheetHeader>
+                    <div className="flex flex-col gap-1 px-4">
+                        {MORE.map((item) => {
+                            const Icon = item.icon;
+                            const active = isActive(url, item.href);
 
                             return (
-                                <li key={href}>
-                                    <Link
-                                        href={href}
-                                        aria-current={active ? 'page' : undefined}
-                                        className={cn(
-                                            'flex items-center gap-2 border-b-2 px-3 py-2 text-sm whitespace-nowrap transition-colors',
-                                            active
-                                                ? 'border-primary font-medium text-foreground'
-                                                : 'border-transparent text-muted-foreground hover:text-foreground',
-                                        )}
-                                    >
-                                        <Icon className="size-4" />
-                                        {label}
-                                    </Link>
-                                </li>
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={cn(
+                                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm',
+                                        active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted',
+                                    )}
+                                >
+                                    <Icon className="size-5" />
+                                    {item.label}
+                                </Link>
                             );
                         })}
-                    </ul>
-                </nav>
-            </header>
+                        <ThemeToggle showLabel />
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </nav>
+    );
+}
 
-            <IssuerIncompleteBanner />
+function BottomBarLink({ item, active }: { item: NavItem; active: boolean }) {
+    const Icon = item.icon;
 
-            <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
-                <FlashMessages />
-                {children}
-            </main>
-        </div>
+    return (
+        <Link
+            href={item.href}
+            aria-current={active ? 'page' : undefined}
+            className={cn('flex flex-col items-center gap-0.5 py-2 text-[11px]', active ? 'text-primary' : 'text-muted-foreground')}
+        >
+            <Icon className="size-5" />
+            {item.label}
+        </Link>
     );
 }
