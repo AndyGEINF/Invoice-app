@@ -130,6 +130,8 @@ export interface DraftLine {
 /** Payload del formulario de borrador (DraftForm). */
 export interface DraftForm {
     id: string | null;
+    /** Cambia en cada guardado. */
+    version: string | null;
     customer_id: string | null;
     series_id: string | null;
     issue_date: string | null;
@@ -237,6 +239,43 @@ export interface DocumentRelations {
     converted_to: RelatedLink | null;
     rectifies: RelatedLink | null;
     rectified_by: RelatedLink[];
+}
+
+interface PaperParty {
+    name: string;
+    tax_id: string | null;
+    address_lines: string[];
+}
+
+/**
+ * Documento tal como se imprime (app/Http/Presenters/PrintableDocument): todo
+ * ya formateado por el servidor, mismo contenido y orden que el PDF.
+ */
+export interface PaperView {
+    title: string;
+    number: string | null;
+    isDraft: boolean;
+    dates: { label: string; value: string }[];
+    issuer: PaperParty & { contact_name: string | null; contact_lines: string[]; logo: string | null };
+    customer: (PaperParty & { trade_name: string | null }) | null;
+    rectifies: string | null;
+    lines: { description: string; quantity: string; unit: string; unit_price: string; discount: string; vat: string; amount: string }[];
+    globalDiscount: string | null;
+    taxes: { label: string; base: string; amount: string }[];
+    totals: { label: string; value: string }[];
+    total: string;
+    exemptions: string[];
+    notes: string | null;
+    footer: string | null;
+}
+
+/** Cliente del selector del borrador. */
+export interface CustomerOption {
+    id: string;
+    legal_name: string;
+    tax_id: string | null;
+    irpf_applies: boolean;
+    surcharge_applies: boolean;
 }
 
 export interface DocumentAbilities {

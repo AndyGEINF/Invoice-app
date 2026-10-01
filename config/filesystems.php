@@ -61,7 +61,9 @@ return [
         'logos' => [
             'driver' => 'local',
             'root' => storage_path('app/public/logos'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/logos',
+            // URL relativa: solo la usa la propia aplicación (el PDF lo incrusta),
+            // así funciona con cualquier host o puerto desde el que se abra.
+            'url' => '/storage/logos',
             'visibility' => 'public',
             'throw' => true,
             'report' => true,

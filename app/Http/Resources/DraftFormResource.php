@@ -31,6 +31,7 @@ final class DraftFormResource extends JsonResource
     {
         return [
             'id' => null,
+            'version' => null,
             'customer_id' => $customerId,
             'series_id' => null,
             'issue_date' => null,
@@ -54,6 +55,8 @@ final class DraftFormResource extends JsonResource
 
         return [
             'id' => $document->id,
+            // Cambia en cada guardado: el editor se reinicia con lo que calculó el servidor.
+            'version' => $document->updated_at?->toIso8601String(),
             'customer_id' => $document->customer_id,
             'series_id' => $document->series_id,
             'issue_date' => self::date($document->issue_date),

@@ -54,7 +54,11 @@ final readonly class PrintableDocument
         public ?string $footer,
     ) {}
 
-    public static function from(Document $document): self
+    /**
+     * @param  bool  $embedLogo  true para el PDF (sin red: logotipo incrustado);
+     *                           false para la vista en la aplicación (URL pública).
+     */
+    public static function from(Document $document, bool $embedLogo = true): self
     {
         $document->loadMissing(['lines', 'taxes', 'customer', 'rectifies']);
 
@@ -71,7 +75,7 @@ final readonly class PrintableDocument
             issuer: self::party($issuer) + [
                 'contact_name' => self::contactName($issuer),
                 'contact_lines' => array_values(array_filter([$issuer['email'] ?? null, $issuer['phone'] ?? null, $issuer['website'] ?? null])),
-                'logo' => self::logoDataUri($issuer['logo_path'] ?? null),
+                'logo' => $embedLogo ? self::logoDataUri($issuer['logo_path'] ?? null) : self::logoUrl($issuer['logo_path'] ?? null),
             ],
             customer: $customer === null ? null : self::party($customer) + [
                 'trade_name' => ($customer['trade_name'] ?? null) !== $customer['legal_name'] ? ($customer['trade_name'] ?? null) : null,
@@ -183,6 +187,15 @@ final readonly class PrintableDocument
         }
 
         return 'data:'.$disk->mimeType($path).';base64,'.base64_encode((string) $disk->get($path));
+    }
+
+    private static function logoUrl(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        return Storage::disk(config('invoice.storage.logos_disk'))->url($path);
     }
 
     private static function rectificationReference(Document $document): ?string

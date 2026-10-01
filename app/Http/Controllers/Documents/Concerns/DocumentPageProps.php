@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Documents\Concerns;
 
 use App\Domain\Documents\Document;
 use App\Domain\Documents\Enums\DocumentType;
-use App\Domain\Documents\Series;
+use App\Http\Pages\DocumentPage;
 
 /**
  * Props y parámetros de ruta que comparten las páginas de documentos.
@@ -20,11 +20,7 @@ trait DocumentPageProps
      */
     protected static function typeProps(DocumentType $type): array
     {
-        return [
-            'value' => $type->value,
-            'label' => $type->label(),
-            'segment' => $type->routeSegment(),
-        ];
+        return DocumentPage::typeProps($type);
     }
 
     /**
@@ -34,19 +30,7 @@ trait DocumentPageProps
      */
     protected static function seriesOptions(DocumentType $type): array
     {
-        return Series::query()
-            ->forType($type)
-            ->where('is_active', true)
-            ->orderByDesc('is_default')
-            ->orderBy('code')
-            ->get()
-            ->map(static fn (Series $series): array => [
-                'id' => $series->id,
-                'code' => $series->code,
-                'prefix' => $series->prefix,
-                'is_default' => $series->is_default,
-            ])
-            ->all();
+        return DocumentPage::seriesOptions($type);
     }
 
     /**
