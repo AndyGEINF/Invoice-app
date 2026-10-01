@@ -29,6 +29,17 @@ export function formatDateLong(isoDate: string | null | undefined): string {
     return new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short', year: 'numeric' }).format(parseDate(isoDate));
 }
 
+/** Instante ISO 8601 → "29 sept 2026, 10:30" en la hora local de quien mira. */
+export function formatDateTime(isoDateTime: string | null | undefined): string {
+    if (!isoDateTime) {
+        return '';
+    }
+
+    return new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(
+        new Date(isoDateTime),
+    );
+}
+
 /** Fecha de hoy en formato "AAAA-MM-DD", para valores por defecto de formularios. */
 export function todayIso(): string {
     const now = new Date();

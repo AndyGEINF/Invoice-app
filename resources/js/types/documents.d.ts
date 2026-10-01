@@ -142,7 +142,6 @@ export interface DraftForm {
     global_discount_percent: string;
     irpf_rate: string;
     notes: string | null;
-    internal_notes: string | null;
     lines: DraftLine[];
     breakdown: TaxBreakdown | null;
 }

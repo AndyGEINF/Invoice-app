@@ -42,7 +42,6 @@ final class DraftFormResource extends JsonResource
             'global_discount_percent' => (string) Percentage::zero(),
             'irpf_rate' => (string) $irpfRate,
             'notes' => null,
-            'internal_notes' => null,
             'lines' => [],
             'breakdown' => null,
         ];
@@ -67,7 +66,6 @@ final class DraftFormResource extends JsonResource
             'global_discount_percent' => (string) $document->global_discount_percent,
             'irpf_rate' => (string) $document->irpf_rate,
             'notes' => $document->notes,
-            'internal_notes' => $document->internal_notes,
             'lines' => $document->lines
                 ->map(static fn (DocumentLine $line): array => [
                     'id' => $line->id,

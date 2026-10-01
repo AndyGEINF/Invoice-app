@@ -1,14 +1,13 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ChevronLeft, Eye, Save, Trash2 } from 'lucide-react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { ChevronLeft } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { DocumentPaper, PaperCustomerAddress } from '@/components/documents/DocumentPaper';
+import { DocumentSidePanel } from '@/components/documents/DocumentSidePanel';
 import { FieldError, LineEditor } from '@/components/documents/LineEditor';
-import { RowStatus, StatusBadge } from '@/components/documents/StatusBadge';
 import { TaxBreakdown } from '@/components/documents/TaxBreakdown';
 import { StatusPill } from '@/components/StatusPill';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,7 +63,8 @@ export default function DocumentShow(props: Props) {
                 {DOCUMENT_LIST_TITLES[type.value]}
             </Link>
 
-            {form ? <DraftEditor key={`${form.id ?? 'new'}-${form.version ?? ''}`} {...props} form={form} /> : <ReadOnlyDocument {...props} />}
+            {/* Clave por documento: guardar notas u otras acciones no reinician el editor ni pierden cambios sin guardar. */}
+            {form ? <DraftEditor key={form.id ?? 'new'} {...props} form={form} /> : <ReadOnlyDocument {...props} />}
         </>
     );
 }
@@ -103,7 +103,7 @@ function toPayload(data: DraftData): DraftData {
     };
 }
 
-function DraftEditor({ type, document, paper, form: saved, customers, defaults, can }: Props & { form: DraftForm }) {
+function DraftEditor({ type, document, paper, form: saved, customers, defaults, can, events, sends, related, series }: Props & { form: DraftForm }) {
     const { invoiceConfig } = usePage().props;
     const form = useForm<DraftData>(toData(saved));
     const errors = form.errors as Record<string, string>;
@@ -112,7 +112,20 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
     const stale = isNew || form.isDirty;
 
     function save() {
-        const options = { preserveScroll: true };
+        const options = {
+            preserveScroll: true,
+            // Tras guardar, el formulario pasa a ser lo que devolvió el servidor
+            // (bases por línea, ids de líneas nuevas…) y deja de estar "sucio".
+            onSuccess: (page: { props: unknown }) => {
+                const next = (page.props as Props).form;
+
+                if (next) {
+                    const data = toData(next);
+                    form.setDefaults(data);
+                    form.setData(data);
+                }
+            },
+        };
         form.transform(toPayload);
 
         if (isNew) {
@@ -151,16 +164,10 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
         });
     }
 
-    function destroy() {
-        if (document && window.confirm('¿Borrar este borrador? No se puede deshacer.')) {
-            router.delete(documentUrl(type, document.id));
-        }
-    }
-
     const total = saved.breakdown?.totals_formatted.total ?? '0,00 €';
 
     return (
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="min-w-0">
                 {errors.domain ? (
                     <Alert variant="destructive" className="mb-4">
@@ -267,74 +274,27 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
                 />
             </div>
 
-            <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
-                <div className="rounded-xl border bg-card p-4">
-                    <div className="flex items-center justify-between gap-2">
-                        <StatusPill tone="neutral" label="Borrador" />
-                        <span className="text-xs text-muted-foreground">{isNew ? 'Sin guardar' : form.isDirty ? 'Cambios sin guardar' : 'Guardado'}</span>
-                    </div>
-                    <p className="mt-3 text-sm text-muted-foreground">Total</p>
-                    <p className="text-2xl font-semibold tabular-nums">{total}</p>
-
-                    <Button className="mt-4 w-full" onClick={save} disabled={form.processing || (!isNew && !form.isDirty)}>
-                        <Save aria-hidden />
-                        {form.processing ? 'Guardando…' : 'Guardar borrador'}
-                    </Button>
-                    <p className="mt-2 text-center text-xs text-muted-foreground">También con Ctrl + S</p>
-
-                    {document ? (
-                        <div className="mt-4 flex flex-col gap-1 border-t pt-4">
-                            <Button variant="ghost" className="justify-start" asChild>
-                                <a href={documentUrl(type, document.id, 'preview')} target="_blank" rel="noreferrer">
-                                    <Eye aria-hidden />
-                                    Vista previa
-                                </a>
-                            </Button>
-                            {can.delete ? (
-                                <Button variant="ghost" className="justify-start text-destructive hover:text-destructive" onClick={destroy}>
-                                    <Trash2 aria-hidden />
-                                    Borrar borrador
-                                </Button>
-                            ) : null}
-                        </div>
-                    ) : null}
-                </div>
-            </aside>
+            <DocumentSidePanel
+                type={type}
+                document={document}
+                total={total}
+                can={can}
+                events={events}
+                sends={sends}
+                related={related}
+                series={series}
+                draft={{ isNew, isDirty: form.isDirty, processing: form.processing, onSave: save, simplified: !customer?.tax_id }}
+            />
         </div>
     );
 }
 
-function ReadOnlyDocument({ type, document, paper }: Props) {
-    if (!document) {
-        return null;
-    }
-
+function ReadOnlyDocument({ type, document, paper, can, events, sends, related, series }: Props) {
     return (
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <DocumentPaper paper={paper} className="min-w-0" />
 
-            <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
-                <div className="rounded-xl border bg-card p-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={document.status} label={document.status_label} />
-                        <RowStatus
-                            status={document.status}
-                            statusLabel={document.status_label}
-                            paymentStatus={document.payment_status}
-                            paymentStatusLabel={document.payment_status_label}
-                        />
-                    </div>
-                    <p className="mt-3 text-sm text-muted-foreground">Total</p>
-                    <p className="text-2xl font-semibold tabular-nums">{paper.total}</p>
-
-                    <Button variant="outline" className="mt-4 w-full" asChild>
-                        <a href={documentUrl(type, document.id, 'preview')} target="_blank" rel="noreferrer">
-                            <Eye aria-hidden />
-                            Vista previa
-                        </a>
-                    </Button>
-                </div>
-            </aside>
+            <DocumentSidePanel type={type} document={document} total={paper.total} can={can} events={events} sends={sends} related={related} series={series} />
         </div>
     );
 }

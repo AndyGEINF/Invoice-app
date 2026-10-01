@@ -58,7 +58,6 @@ final class DraftDocumentRequest extends FormRequest
             'global_discount_percent' => ['sometimes', self::PERCENTAGE_RULE, 'between:'.Percentage::MIN.','.Percentage::MAX],
             'irpf_rate' => ['sometimes', self::PERCENTAGE_RULE, 'between:'.Percentage::MIN.','.Percentage::MAX],
             'notes' => ['nullable', 'string', 'max:'.self::MAX_NOTES_LENGTH],
-            'internal_notes' => ['nullable', 'string', 'max:'.self::MAX_NOTES_LENGTH],
 
             'lines' => ['present', 'array', 'max:'.self::MAX_LINES],
             'lines.*.id' => ['nullable', 'uuid'],

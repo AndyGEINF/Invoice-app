@@ -1,14 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { TriangleAlert } from 'lucide-react';
 
-import type { IssuerMissingField } from '@/types';
-
-const MISSING_LABELS: Record<IssuerMissingField, string> = {
-    name: 'tu nombre',
-    logo: 'el logotipo',
-    tax_id: 'un NIF válido',
-    address: 'la dirección completa',
-};
+import { ISSUER_MISSING_LABELS } from '@/lib/issuer';
 
 /**
  * Aviso permanente mientras faltan datos del emisor: sin ellos no se puede
@@ -21,7 +14,7 @@ export function IssuerIncompleteBanner() {
         return null;
     }
 
-    const missing = issuer.missing.map((field) => MISSING_LABELS[field]);
+    const missing = issuer.missing.map((field) => ISSUER_MISSING_LABELS[field]);
 
     return (
         <div role="alert" className="border-b border-warning/30 bg-warning-soft text-warning-strong">

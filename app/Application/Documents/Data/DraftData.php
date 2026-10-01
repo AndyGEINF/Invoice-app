@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Documents\Data;
 
+use App\Application\Documents\UpdateInternalNotes;
 use App\Domain\Catalog\Product;
 use App\Domain\Shared\Currency;
 use App\Domain\Shared\Percentage;
@@ -28,7 +29,6 @@ final readonly class DraftData
         public ?CarbonImmutable $dueDate = null,
         public ?CarbonImmutable $operationDate = null,
         public ?string $notes = null,
-        public ?string $internalNotes = null,
     ) {}
 
     /** @param array<string, mixed> $form */
@@ -57,13 +57,13 @@ final readonly class DraftData
             dueDate: self::dateOrNull($form['due_date'] ?? null),
             operationDate: self::dateOrNull($form['operation_date'] ?? null),
             notes: self::stringOrNull($form['notes'] ?? null),
-            internalNotes: self::stringOrNull($form['internal_notes'] ?? null),
         );
     }
 
     /**
      * Columnas de `documents` que fija el formulario. La serie, el número, los
-     * snapshots y los totales los ponen otros casos de uso.
+     * snapshots y los totales los ponen otros casos de uso; las notas internas
+     * tienen su propio guardado ({@see UpdateInternalNotes}).
      *
      * @return array<string, mixed>
      */
@@ -80,7 +80,6 @@ final readonly class DraftData
             'due_date' => $this->dueDate,
             'operation_date' => $this->operationDate,
             'notes' => $this->notes,
-            'internal_notes' => $this->internalNotes,
         ];
     }
 

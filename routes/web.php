@@ -5,6 +5,7 @@ use App\Http\Controllers\Documents\DocumentFormController;
 use App\Http\Controllers\Documents\DocumentIndexController;
 use App\Http\Controllers\Documents\DocumentPreviewController;
 use App\Http\Controllers\Documents\DocumentShowController;
+use App\Http\Controllers\Documents\InternalNotesController;
 use App\Http\Controllers\Documents\IssueInvoiceController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,5 +45,6 @@ Route::name('documents.')->group(function () use ($fiscalTypes, $creatableTypes)
             Route::put('/', [DocumentFormController::class, 'update'])->name('update');
             Route::delete('/', [DocumentFormController::class, 'destroy'])->name('destroy');
             Route::post('/issue', IssueInvoiceController::class)->name('issue');
+            Route::patch('/internal-notes', InternalNotesController::class)->name('internal-notes');
         });
 });
