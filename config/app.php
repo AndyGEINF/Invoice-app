@@ -59,13 +59,13 @@ return [
     | Application Timezone
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | Hora de España peninsular y Baleares (territorio común). Decide qué día
+    | es "hoy" al emitir: con UTC, entre las 00:00 y las 02:00 una factura
+    | saldría con la fecha del día anterior y no se podría emitir con la de hoy.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Europe/Madrid'),
 
     /*
     |--------------------------------------------------------------------------

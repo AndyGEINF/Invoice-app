@@ -97,6 +97,10 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Misma zona que la aplicación (config/app.php): Laravel envía las
+            // horas sin desfase y PostgreSQL las interpreta en la zona de la
+            // sesión. Si no coinciden, cada `timestamptz` se guarda desplazado.
+            'timezone' => env('APP_TIMEZONE', 'Europe/Madrid'),
         ],
 
         'sqlsrv' => [

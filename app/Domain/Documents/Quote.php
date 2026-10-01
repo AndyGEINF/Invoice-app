@@ -53,9 +53,11 @@ final class Quote extends Document
     {
         $today ??= CarbonImmutable::today();
 
+        // Se comparan días de calendario, no instantes: así no influye la zona
+        // horaria de cada fecha (igual que el scope `expired`).
         return $this->status === QuoteStatus::Sent
             && $this->valid_until !== null
-            && $this->valid_until->lessThan($today);
+            && $this->valid_until->toDateString() < $today->toDateString();
     }
 
     public function isConverted(): bool

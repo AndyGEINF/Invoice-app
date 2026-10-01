@@ -50,7 +50,8 @@ trait IsFiscalDocument
 
         $today ??= CarbonImmutable::today();
 
-        if ($this->due_date !== null && $this->due_date->lessThan($today)) {
+        // Días de calendario, no instantes: no influye la zona horaria de cada fecha.
+        if ($this->due_date !== null && $this->due_date->toDateString() < $today->toDateString()) {
             return PaymentStatus::Overdue;
         }
 
