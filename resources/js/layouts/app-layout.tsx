@@ -52,7 +52,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
                 <div className="md:pl-16">
                     <IssuerIncompleteBanner />
-                    <main className="mx-auto w-full max-w-7xl px-4 pt-6 pb-24 md:px-8 md:pb-10">
+                    {/* Aprovecha pantallas anchas: hasta 1920 px; solo en 4K queda margen a los lados. */}
+                    <main className="mx-auto w-full max-w-[120rem] px-4 pt-6 pb-24 md:px-8 md:pb-10">
                         <FlashMessages />
                         {children}
                     </main>

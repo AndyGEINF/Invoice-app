@@ -64,7 +64,7 @@ export function DocumentSidePanel({
     draft?: DraftState;
 }) {
     return (
-        <aside aria-label="Panel del documento" className="flex flex-col gap-4 lg:sticky lg:top-6">
+        <aside aria-label="Panel del documento" className="flex flex-col gap-4 xl:sticky xl:top-6">
             <Tabs defaultValue="general" className="rounded-xl border bg-card p-3">
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="general" className={TAB_TRIGGER_CLASS}>

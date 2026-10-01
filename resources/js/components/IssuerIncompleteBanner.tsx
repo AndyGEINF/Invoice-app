@@ -18,7 +18,7 @@ export function IssuerIncompleteBanner() {
 
     return (
         <div role="alert" className="border-b border-warning/30 bg-warning-soft text-warning-strong">
-            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm md:px-8">
+            <div className="mx-auto flex max-w-[120rem] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm md:px-8">
                 <TriangleAlert aria-hidden className="size-4 shrink-0" />
                 <p className="flex-1">
                     Para emitir facturas completa los datos de tu empresa. Falta {missing.join(', ')}.

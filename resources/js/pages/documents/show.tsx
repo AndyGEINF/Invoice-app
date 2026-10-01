@@ -58,10 +58,12 @@ export default function DocumentShow(props: Props) {
         <>
             <Head title={title} />
 
-            <Link href={documentUrl(type)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="size-4" />
-                {DOCUMENT_LIST_TITLES[type.value]}
-            </Link>
+            <div className="mx-auto max-w-[112rem]">
+                <Link href={documentUrl(type)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                    <ChevronLeft className="size-4" />
+                    {DOCUMENT_LIST_TITLES[type.value]}
+                </Link>
+            </div>
 
             {/* Clave por documento: guardar notas u otras acciones no reinician el editor ni pierden cambios sin guardar. */}
             {form ? <DraftEditor key={form.id ?? 'new'} {...props} form={form} /> : <ReadOnlyDocument {...props} />}
@@ -167,7 +169,7 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
     const total = saved.breakdown?.totals_formatted.total ?? '0,00 €';
 
     return (
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="mx-auto grid max-w-[112rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
             <div className="min-w-0">
                 {errors.domain ? (
                     <Alert variant="destructive" className="mb-4">
@@ -291,7 +293,7 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
 
 function ReadOnlyDocument({ type, document, paper, can, events, sends, related, series }: Props) {
     return (
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="mx-auto grid max-w-[112rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
             <DocumentPaper paper={paper} className="min-w-0" />
 
             <DocumentSidePanel type={type} document={document} total={paper.total} can={can} events={events} sends={sends} related={related} series={series} />

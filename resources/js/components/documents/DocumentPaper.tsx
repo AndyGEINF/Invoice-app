@@ -55,7 +55,8 @@ export function DocumentPaper({
                     </div>
                 </div>
 
-                <div className="text-right">
+                {/* ml-auto: si no cabe al lado del emisor y baja de línea, sigue pegado a la derecha. */}
+                <div className="ml-auto text-right">
                     <p className="text-xl font-semibold tracking-tight">{title ?? paper.title}</p>
                     <div className="mt-1 flex justify-end">{status ?? (paper.number ? <p className="font-semibold">{paper.number}</p> : null)}</div>
                     <div className="mt-2 text-sm">
