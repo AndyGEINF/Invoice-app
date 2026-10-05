@@ -1,0 +1,209 @@
+{
+    "about": "Regresión del motor de impuestos (SC-002). Cada caso trae el desglose esperado calculado a mano con el algoritmo de specs/001-nucleo-facturacion/contracts/tax-engine.md: agrupar por (IVA, recargo, exención), redondear la base del grupo a céntimos (mitad hacia arriba) y calcular la cuota sobre la base redondeada. Los casos 'construido' son situaciones típicas de autónomo y pyme preparadas para la fase 1; T102 añade facturas reales anonimizadas del equipo o la asesoría hasta llegar a 50 (origen 'real').",
+    "cases": [
+        {
+            "id": "R01",
+            "origin": "construido",
+            "description": "Diseñadora autónoma a una empresa con retención del 15 %",
+            "context": { "irpf_rate": "15", "customer_irpf": true },
+            "lines": [
+                { "quantity": "1", "unit_price": "1250", "vat_rate": "21", "irpf": true },
+                { "quantity": "3", "unit_price": "45", "vat_rate": "21", "irpf": true }
+            ],
+            "calculation": "1250 + 3×45 = 1385,00 · IVA 21 % = 290,85 · IRPF 15 % = 207,75 · total 1385,00 + 290,85 − 207,75",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "1385.00", "amount": "290.85" },
+                    { "type": "IRPF", "rate": "15.00", "base": "1385.00", "amount": "207.75" }
+                ],
+                "taxable_base": "1385.00", "vat_total": "290.85", "surcharge_total": "0.00", "irpf_total": "207.75", "total": "1468.10"
+            }
+        },
+        {
+            "id": "R02",
+            "origin": "construido",
+            "description": "Nuevo autónomo (IRPF 7 %) con un desplazamiento que no lleva retención",
+            "context": { "irpf_rate": "7", "customer_irpf": true },
+            "lines": [
+                { "quantity": "1", "unit_price": "800", "vat_rate": "21", "irpf": true },
+                { "quantity": "1", "unit_price": "25", "vat_rate": "21", "irpf": false }
+            ],
+            "calculation": "base 825,00 · IVA 21 % = 173,25 · IRPF 7 % sobre 800,00 = 56,00 · total 825 + 173,25 − 56",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "825.00", "amount": "173.25" },
+                    { "type": "IRPF", "rate": "7.00", "base": "800.00", "amount": "56.00" }
+                ],
+                "taxable_base": "825.00", "vat_total": "173.25", "surcharge_total": "0.00", "irpf_total": "56.00", "total": "942.25"
+            }
+        },
+        {
+            "id": "R03",
+            "origin": "construido",
+            "description": "Mayorista a un comercio en recargo de equivalencia, tres tipos",
+            "context": { "customer_surcharge": true },
+            "lines": [
+                { "quantity": "10", "unit_price": "12.50", "vat_rate": "21", "surcharge_rate": "5.20" },
+                { "quantity": "24", "unit_price": "1.35", "vat_rate": "10", "surcharge_rate": "1.40" },
+                { "quantity": "5", "unit_price": "3.20", "vat_rate": "4", "surcharge_rate": "0.50" }
+            ],
+            "calculation": "21 %: 125,00 → IVA 26,25, RE 6,50 · 10 %: 32,40 → IVA 3,24, RE 0,4536 → 0,45 · 4 %: 16,00 → IVA 0,64, RE 0,08",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "125.00", "amount": "26.25" },
+                    { "type": "RE", "rate": "5.20", "base": "125.00", "amount": "6.50" },
+                    { "type": "IVA", "rate": "10.00", "base": "32.40", "amount": "3.24" },
+                    { "type": "RE", "rate": "1.40", "base": "32.40", "amount": "0.45" },
+                    { "type": "IVA", "rate": "4.00", "base": "16.00", "amount": "0.64" },
+                    { "type": "RE", "rate": "0.50", "base": "16.00", "amount": "0.08" }
+                ],
+                "taxable_base": "173.40", "vat_total": "30.13", "surcharge_total": "7.03", "irpf_total": "0.00", "total": "210.56"
+            }
+        },
+        {
+            "id": "R04",
+            "origin": "construido",
+            "description": "Precios con milésimas: se redondea el grupo, no cada línea",
+            "context": {},
+            "lines": [
+                { "quantity": "7", "unit_price": "2.345", "vat_rate": "21" },
+                { "quantity": "13", "unit_price": "0.789", "vat_rate": "21" },
+                { "quantity": "2", "unit_price": "19.995", "vat_rate": "21" }
+            ],
+            "calculation": "16,415 + 10,257 + 39,990 = 66,662 → base 66,66 (por línea saldría 66,67) · IVA 13,9986 → 14,00",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "66.66", "amount": "14.00" }
+                ],
+                "taxable_base": "66.66", "vat_total": "14.00", "surcharge_total": "0.00", "irpf_total": "0.00", "total": "80.66"
+            }
+        },
+        {
+            "id": "R05",
+            "origin": "construido",
+            "description": "Descuento por línea del 10 % y descuento global del 5 %",
+            "context": { "global_discount": "5" },
+            "lines": [
+                { "quantity": "2", "unit_price": "150", "vat_rate": "21", "discount": "10" },
+                { "quantity": "1", "unit_price": "80", "vat_rate": "10" }
+            ],
+            "calculation": "300 × 0,90 × 0,95 = 256,50 → IVA 53,865 → 53,87 · 80 × 0,95 = 76,00 → IVA 7,60",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "256.50", "amount": "53.87" },
+                    { "type": "IVA", "rate": "10.00", "base": "76.00", "amount": "7.60" }
+                ],
+                "taxable_base": "332.50", "vat_total": "61.47", "surcharge_total": "0.00", "irpf_total": "0.00", "total": "393.97"
+            }
+        },
+        {
+            "id": "R06",
+            "origin": "construido",
+            "description": "Formación exenta (art. 20) junto a un servicio con IVA",
+            "context": {},
+            "lines": [
+                { "quantity": "1", "unit_price": "600", "vat_rate": "0", "exemption": "E1" },
+                { "quantity": "1", "unit_price": "120", "vat_rate": "21" }
+            ],
+            "calculation": "exento: 600,00, cuota 0 · 21 %: 120,00 → 25,20",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "0.00", "base": "600.00", "amount": "0.00", "exemption": "E1" },
+                    { "type": "IVA", "rate": "21.00", "base": "120.00", "amount": "25.20" }
+                ],
+                "taxable_base": "720.00", "vat_total": "25.20", "surcharge_total": "0.00", "irpf_total": "0.00", "total": "745.20"
+            }
+        },
+        {
+            "id": "R07",
+            "origin": "construido",
+            "description": "Entrega intracomunitaria exenta (art. 25) a un cliente de la UE",
+            "context": {},
+            "lines": [
+                { "quantity": "3", "unit_price": "1200", "vat_rate": "0", "exemption": "E5" }
+            ],
+            "calculation": "3 × 1200 = 3600,00 exento · total 3600,00",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "0.00", "base": "3600.00", "amount": "0.00", "exemption": "E5" }
+                ],
+                "taxable_base": "3600.00", "vat_total": "0.00", "surcharge_total": "0.00", "irpf_total": "0.00", "total": "3600.00"
+            }
+        },
+        {
+            "id": "R08",
+            "origin": "construido",
+            "description": "Emisor en régimen exento (actividad sanitaria) a una empresa con retención",
+            "context": { "issuer_regime": "exempt", "irpf_rate": "15", "customer_irpf": true },
+            "lines": [
+                { "quantity": "2", "unit_price": "60", "vat_rate": "21", "irpf": true, "exemption": "E1" }
+            ],
+            "calculation": "el régimen exento fuerza IVA 0: base 120,00 · IRPF 15 % = 18,00 · total 120 − 18",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "0.00", "base": "120.00", "amount": "0.00", "exemption": "E1" },
+                    { "type": "IRPF", "rate": "15.00", "base": "120.00", "amount": "18.00" }
+                ],
+                "taxable_base": "120.00", "vat_total": "0.00", "surcharge_total": "0.00", "irpf_total": "18.00", "total": "102.00"
+            }
+        },
+        {
+            "id": "R09",
+            "origin": "construido",
+            "description": "Horas con decimales y una licencia prorrateada sin retención",
+            "context": { "irpf_rate": "15", "customer_irpf": true },
+            "lines": [
+                { "quantity": "7.5", "unit_price": "42.50", "vat_rate": "21", "irpf": true },
+                { "quantity": "0.25", "unit_price": "1000", "vat_rate": "21", "irpf": false }
+            ],
+            "calculation": "318,75 + 250,00 = 568,75 → IVA 119,4375 → 119,44 · IRPF 15 % de 318,75 = 47,8125 → 47,81",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "568.75", "amount": "119.44" },
+                    { "type": "IRPF", "rate": "15.00", "base": "318.75", "amount": "47.81" }
+                ],
+                "taxable_base": "568.75", "vat_total": "119.44", "surcharge_total": "0.00", "irpf_total": "47.81", "total": "640.38"
+            }
+        },
+        {
+            "id": "R10",
+            "origin": "construido",
+            "description": "Ticket con muchas líneas pequeñas y dos tipos",
+            "context": {},
+            "lines": [
+                { "quantity": "1", "unit_price": "1.99", "vat_rate": "21" },
+                { "quantity": "1", "unit_price": "2.49", "vat_rate": "21" },
+                { "quantity": "3", "unit_price": "0.99", "vat_rate": "21" },
+                { "quantity": "2", "unit_price": "4.75", "vat_rate": "21" },
+                { "quantity": "1", "unit_price": "0.15", "vat_rate": "21" },
+                { "quantity": "4", "unit_price": "1.10", "vat_rate": "10" }
+            ],
+            "calculation": "21 %: 17,10 → IVA 3,591 → 3,59 · 10 %: 4,40 → 0,44",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "17.10", "amount": "3.59" },
+                    { "type": "IVA", "rate": "10.00", "base": "4.40", "amount": "0.44" }
+                ],
+                "taxable_base": "21.50", "vat_total": "4.03", "surcharge_total": "0.00", "irpf_total": "0.00", "total": "25.53"
+            }
+        },
+        {
+            "id": "R11",
+            "origin": "construido",
+            "description": "Cuota que cae exactamente en medio céntimo (se redondea hacia arriba)",
+            "context": {},
+            "lines": [
+                { "quantity": "1", "unit_price": "12.50", "vat_rate": "21" },
+                { "quantity": "1", "unit_price": "0.50", "vat_rate": "10" }
+            ],
+            "calculation": "12,50 × 21 % = 2,625 → 2,63 · 0,50 × 10 % = 0,05",
+            "expected": {
+                "groups": [
+                    { "type": "IVA", "rate": "21.00", "base": "12.50", "amount": "2.63" },
+                    { "type": "IVA", "rate": "10.00", "base": "0.50", "amount": "0.05" }
+                ],
+                "taxable_base": "13.00", "vat_total": "2.68", "surcharge_total": "0.00", "irpf_total": "0.00", "total": "15.68"
+            }
+        }
+    ]
+}
