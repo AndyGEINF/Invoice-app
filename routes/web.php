@@ -1,12 +1,14 @@
 <?php
 
 use App\Domain\Documents\Enums\DocumentType;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentFormController;
 use App\Http\Controllers\Documents\DocumentIndexController;
 use App\Http\Controllers\Documents\DocumentPreviewController;
 use App\Http\Controllers\Documents\DocumentShowController;
 use App\Http\Controllers\Documents\InternalNotesController;
 use App\Http\Controllers\Documents\IssueInvoiceController;
+use App\Http\Controllers\Issuer\IssuerSettingsController;
 use Illuminate\Support\Facades\Route;
 
 // La aplicación no tiene login: ninguna ruta usa middleware de autenticación
@@ -14,7 +16,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
-Route::inertia('/dashboard', 'dashboard')->name('dashboard');
+Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+// Datos del emisor. El formulario lleva el logotipo, así que se envía como
+// multipart con POST + `_method=PUT` (Inertia lo hace solo).
+Route::get('/settings/issuer', [IssuerSettingsController::class, 'edit'])->name('settings.issuer');
+Route::put('/settings/issuer', [IssuerSettingsController::class, 'update'])->name('settings.issuer.update');
 
 /*
 | Documentos: un único recurso con el tipo en la URL (/invoices, /credit-notes).
