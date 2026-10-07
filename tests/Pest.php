@@ -1,7 +1,9 @@
 <?php
 
 use App\Domain\Issuer\Issuer;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /*
@@ -42,4 +44,13 @@ function configuredIssuer(array $overrides = []): Issuer
     $issuer->save();
 
     return $issuer->refresh();
+}
+
+/** Petición Inertia: devuelve las props de la página en JSON. */
+function inertiaGet(string $url): TestResponse
+{
+    return test()->withHeaders([
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => (string) (new HandleInertiaRequests)->version(request()),
+    ])->get($url);
 }

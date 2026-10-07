@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\Issuer\Issuer;
-use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\TestResponse;
 
 const LOGO_FIXTURE = __DIR__.'/../../Fixtures/logo.png';
 
@@ -16,15 +14,6 @@ const OVERSIZED_LOGO_KB = 3072;
 beforeEach(function () {
     Storage::fake(config('invoice.storage.logos_disk'));
 });
-
-/** Petición Inertia: devuelve las props de la página en JSON. */
-function inertiaGet(string $url): TestResponse
-{
-    return test()->withHeaders([
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => (string) (new HandleInertiaRequests)->version(request()),
-    ])->get($url);
-}
 
 function logoUpload(string $suffix = ''): UploadedFile
 {
