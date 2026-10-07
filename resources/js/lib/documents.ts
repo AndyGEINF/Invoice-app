@@ -30,6 +30,13 @@ export const NEW_DOCUMENT_LABELS: Partial<Record<DocumentTypeValue, string>> = {
     invoice: 'Nueva factura',
 };
 
+/** Segmento de URL de cada tipo (igual que DocumentType::routeSegment() en PHP). */
+export const DOCUMENT_SEGMENTS: Record<DocumentTypeValue, string> = {
+    quote: 'quotes',
+    invoice: 'invoices',
+    credit_note: 'credit-notes',
+};
+
 /** URL de un documento: /invoices, /invoices/{id}, /invoices/{id}/edit… */
 export function documentUrl(type: DocumentTypeProps, id?: string, action?: 'edit' | 'preview' | 'issue'): string {
     const base = `/${type.segment}`;

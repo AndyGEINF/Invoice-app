@@ -25,8 +25,9 @@ final class IssuerSettingsController extends Controller
         $issuer = Issuer::current();
         $address = $issuer->address ?? Address::empty();
 
+        // "settings" y no "issuer": ese nombre ya lo usa la prop compartida del aviso de datos incompletos.
         return Inertia::render('settings/issuer', [
-            'issuer' => [
+            'settings' => [
                 'name' => $issuer->name,
                 'company_name' => $issuer->company_name,
                 'logo_url' => $issuer->logo_path !== null && $issuer->logo_path !== ''

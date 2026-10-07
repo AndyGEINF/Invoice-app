@@ -51,7 +51,16 @@ describe('pantalla de ajustes', function () {
         inertiaGet('/settings/issuer')
             ->assertOk()
             ->assertJsonPath('component', 'settings/issuer')
-            ->assertJsonPath('props.issuer.missing', [Issuer::MISSING_NAME, Issuer::MISSING_LOGO, Issuer::MISSING_TAX_ID, Issuer::MISSING_ADDRESS]);
+            ->assertJsonPath('props.settings.missing', [Issuer::MISSING_NAME, Issuer::MISSING_LOGO, Issuer::MISSING_TAX_ID, Issuer::MISSING_ADDRESS])
+            ->assertJsonPath('props.issuer.isComplete', false);
+    });
+
+    it('no pisa la prop compartida del emisor que usa el aviso de datos incompletos', function () {
+        $this->put('/settings/issuer', issuerForm());
+
+        inertiaGet('/settings/issuer')
+            ->assertJsonPath('props.issuer.isComplete', true)
+            ->assertJsonPath('props.settings.missing', []);
     });
 });
 
