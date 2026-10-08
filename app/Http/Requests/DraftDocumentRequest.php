@@ -9,9 +9,9 @@ use App\Application\Documents\DraftWriter;
 use App\Domain\Documents\Enums\ExemptionCode;
 use App\Domain\Shared\Currency;
 use App\Domain\Shared\Percentage;
+use App\Http\Requests\Concerns\NormalizesPercentages;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Throwable;
 
 /**
  * Valida el `DraftForm` de contracts/web-routes.md: formatos, rangos y tipos
@@ -23,6 +23,8 @@ use Throwable;
  */
 final class DraftDocumentRequest extends FormRequest
 {
+    use NormalizesPercentages;
+
     public const int MAX_LINES = 500;
 
     public const int MAX_DESCRIPTION_LENGTH = 2000;
@@ -130,19 +132,5 @@ final class DraftDocumentRequest extends FormRequest
                 return $line;
             }, $lines),
         ]);
-    }
-
-    /** Si no es un porcentaje válido se deja tal cual para que lo rechacen las reglas. */
-    private static function normalizePercentage(mixed $value): mixed
-    {
-        if (! is_string($value) && ! is_int($value)) {
-            return $value;
-        }
-
-        try {
-            return (string) Percentage::of((string) $value);
-        } catch (Throwable) {
-            return $value;
-        }
     }
 }

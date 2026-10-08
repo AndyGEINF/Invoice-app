@@ -1,6 +1,12 @@
 <?php
 
 use App\Domain\Documents\Enums\DocumentType;
+use App\Http\Controllers\Customers\CustomerArchiveController;
+use App\Http\Controllers\Customers\CustomerFormController;
+use App\Http\Controllers\Customers\CustomerIndexController;
+use App\Http\Controllers\Customers\CustomerSearchController;
+use App\Http\Controllers\Customers\CustomerShowController;
+use App\Http\Controllers\Customers\ValidateVatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentFormController;
 use App\Http\Controllers\Documents\DocumentIndexController;
@@ -9,6 +15,10 @@ use App\Http\Controllers\Documents\DocumentShowController;
 use App\Http\Controllers\Documents\InternalNotesController;
 use App\Http\Controllers\Documents\IssueInvoiceController;
 use App\Http\Controllers\Issuer\IssuerSettingsController;
+use App\Http\Controllers\Products\ProductArchiveController;
+use App\Http\Controllers\Products\ProductFormController;
+use App\Http\Controllers\Products\ProductIndexController;
+use App\Http\Controllers\Products\ProductSearchController;
 use Illuminate\Support\Facades\Route;
 
 // La aplicación no tiene login: ninguna ruta usa middleware de autenticación
@@ -22,6 +32,37 @@ Route::get('/dashboard', DashboardController::class)->name('dashboard');
 // multipart con POST + `_method=PUT` (Inertia lo hace solo).
 Route::get('/settings/issuer', [IssuerSettingsController::class, 'edit'])->name('settings.issuer');
 Route::put('/settings/issuer', [IssuerSettingsController::class, 'update'])->name('settings.issuer.update');
+
+// Clientes y catálogo. No se borran: se archivan (las facturas los referencian).
+Route::prefix('/customers')->name('customers.')->group(function (): void {
+    Route::get('/', CustomerIndexController::class)->name('index');
+    Route::get('/search', CustomerSearchController::class)->name('search');
+    Route::get('/create', [CustomerFormController::class, 'create'])->name('create');
+    Route::post('/', [CustomerFormController::class, 'store'])->name('store');
+
+    Route::prefix('/{customer}')->whereUuid('customer')->group(function (): void {
+        Route::get('/', CustomerShowController::class)->name('show');
+        Route::get('/edit', [CustomerFormController::class, 'edit'])->name('edit');
+        Route::put('/', [CustomerFormController::class, 'update'])->name('update');
+        Route::post('/archive', [CustomerArchiveController::class, 'archive'])->name('archive');
+        Route::post('/restore', [CustomerArchiveController::class, 'restore'])->name('restore');
+        Route::post('/validate-vat', ValidateVatController::class)->name('validate-vat');
+    });
+});
+
+Route::prefix('/products')->name('products.')->group(function (): void {
+    Route::get('/', ProductIndexController::class)->name('index');
+    Route::get('/search', ProductSearchController::class)->name('search');
+    Route::get('/create', [ProductFormController::class, 'create'])->name('create');
+    Route::post('/', [ProductFormController::class, 'store'])->name('store');
+
+    Route::prefix('/{product}')->whereUuid('product')->group(function (): void {
+        Route::get('/edit', [ProductFormController::class, 'edit'])->name('edit');
+        Route::put('/', [ProductFormController::class, 'update'])->name('update');
+        Route::post('/archive', [ProductArchiveController::class, 'archive'])->name('archive');
+        Route::post('/restore', [ProductArchiveController::class, 'restore'])->name('restore');
+    });
+});
 
 /*
 | Documentos: un único recurso con el tipo en la URL (/invoices, /credit-notes).

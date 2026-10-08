@@ -30,23 +30,25 @@ final readonly class UpsertCustomer
 
         $customer ??= new Customer;
 
-        $saved = DB::transaction(function () use ($data, $customer): Customer {
-            $customer->fill($data->toAttributes());
-            $taxIdChanged = $customer->isDirty('tax_id');
+        $customer->fill($data->toAttributes());
+        $taxIdChanged = $customer->isDirty('tax_id');
 
+        DB::transaction(function () use ($data, $customer, $taxIdChanged): void {
             if ($taxIdChanged) {
                 $customer->vies_validated_at = null;
             }
 
             $customer->save();
             $this->syncContacts($customer, $data->contacts);
-
-            CustomerSaved::dispatch($customer->id, $taxIdChanged);
-
-            return $customer;
         });
 
-        return UpsertResult::saved($saved->refresh());
+        // Tras el commit y fuera de la transacción: el job de VIES es único por
+        // cliente y su bloqueo vive en la caché, que puede ser esta misma base de
+        // datos. Si ya hay una validación pendiente, fallar al tomar el bloqueo
+        // dentro de la transacción la abortaría en Postgres y no se guardaría nada.
+        CustomerSaved::dispatch($customer->id, $taxIdChanged);
+
+        return UpsertResult::saved($customer->refresh());
     }
 
     private function findDuplicate(CustomerData $data, ?Customer $customer): ?Customer
