@@ -4,7 +4,7 @@
     "type": "project",
     "description": "INVOICE: facturas y presupuestos para un autonomo o pyme de Espana.",
     "keywords": ["facturacion", "verifactu", "laravel"],
-    "license": "proprietary",
+    "license": "AGPL-3.0-only",
     "require": {
         "php": "^8.4",
         "ext-bcmath": "*",

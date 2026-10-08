@@ -10,6 +10,7 @@ pueden modificar una vez emitidas.
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
+[![Licencia AGPL v3](https://img.shields.io/badge/licencia-AGPL--3.0-blue)](LICENSE)
 
 > **⚠️ La aplicación no tiene login.** Está pensada para una sola persona o empresa y no
 > tiene cuentas de usuario. Ejecútala en tu equipo o en una red privada; si necesitas
@@ -267,5 +268,14 @@ Desarrollado por **Andy** ([@AndyGEINF](https://github.com/AndyGEINF)).
 
 ## Licencia
 
-Pendiente de definir. Mientras tanto, el código se puede consultar pero no reutilizar
-sin permiso del autor.
+[GNU AGPL v3](LICENSE) (`AGPL-3.0-only`). Puedes usar, estudiar, modificar y
+redistribuir el código. Si ofreces una versión modificada como servicio a otras
+personas, por ejemplo en una web, tienes que publicar su código fuente bajo la misma
+licencia.
+
+Si quieres usarlo en un producto de código cerrado, contacta con el autor a través de
+su [perfil de GitHub](https://github.com/AndyGEINF) para una licencia comercial.
+
+La aplicación se ofrece tal cual, sin garantías. Antes de usarla para facturar de
+verdad, comprueba que el resultado cumple tus obligaciones fiscales, a ser posible con
+tu asesor.
