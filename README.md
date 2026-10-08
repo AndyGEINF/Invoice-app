@@ -26,7 +26,7 @@ pueden modificar una vez emitidas.
 | **Para quién** | Un autónomo o una pyme española (territorio común, sin País Vasco, Navarra ni Canarias). |
 | **Qué la diferencia** | Las reglas fiscales no dependen de la buena voluntad del código: la base de datos impide modificar una factura emitida y un test lanza 50 emisiones simultáneas para comprobar que la numeración nunca se repite ni deja huecos. |
 | **Calidad** | Más de 400 tests automáticos contra PostgreSQL real, integración continua en cada push y tipado estricto en todo el frontend. |
-| **Forma de trabajo** | Desarrollo guiado por especificación: requisitos → plan técnico → tareas. Cada tarea es un commit y una issue de GitHub. |
+| **Forma de trabajo** | Desarrollo guiado por especificación: requisitos → plan técnico → tareas. Cada tarea es un commit. |
 
 ---
 
@@ -147,8 +147,8 @@ escribe qué debe hacer la aplicación (historias de usuario y criterios de acep
 después el plan técnico y los contratos (rutas, puertos, motor de impuestos) y por
 último una lista de tareas ordenadas por dependencias.
 
-- Cada tarea corresponde a **un commit** (`T0xx: descripción`) y a **una issue** de
-  GitHub, que se cierra al terminarla.
+- Cada tarea corresponde a **un commit** (`T0xx: descripción`), de modo que el
+  historial de git cuenta cómo se ha construido la aplicación paso a paso.
 - Las funcionalidades se prueban también en un navegador real antes de darlas por
   buenas, en escritorio y en móvil.
 - Ramas: `develop` para el trabajo diario y `main` solo para versiones aprobadas.
