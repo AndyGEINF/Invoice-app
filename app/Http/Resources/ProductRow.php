@@ -31,6 +31,8 @@ final class ProductRow extends JsonResource
             'type_label' => $product->type->label(),
             'name' => $product->name,
             'description' => $product->description,
+            // Texto que se copia a la línea del documento al elegirlo.
+            'line_description' => $product->lineDescription(),
             'unit_price' => $product->unit_price->toDecimalString(),
             'unit_price_formatted' => SpanishFormat::unitPrice($product->unit_price, Currency::EUR),
             'unit' => $product->unit,

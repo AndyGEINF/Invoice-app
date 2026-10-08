@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Customers;
 use App\Domain\Customers\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Queries\CatalogIndexQuery;
+use App\Http\Resources\CustomerOption;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,15 +24,7 @@ final class CustomerSearchController extends Controller
             ->orderBy('legal_name')
             ->limit(CatalogIndexQuery::SEARCH_LIMIT)
             ->get()
-            ->map(static fn (Customer $customer): array => [
-                'id' => $customer->id,
-                'legal_name' => $customer->legal_name,
-                'trade_name' => $customer->trade_name,
-                'tax_id' => $customer->tax_id,
-                'email' => $customer->email,
-                'irpf_applies' => $customer->appliesIrpf(),
-                'surcharge_applies' => $customer->surcharge_applies,
-            ]);
+            ->map(fn (Customer $customer): array => (new CustomerOption($customer))->resolve($request));
 
         return response()->json($customers);
     }

@@ -271,10 +271,13 @@ export interface PaperView {
 }
 
 /** Cliente del selector del borrador. */
+/** Cliente del selector del documento (CustomerOption en PHP; lo devuelve /customers/search). */
 export interface CustomerOption {
     id: string;
     legal_name: string;
+    trade_name: string | null;
     tax_id: string | null;
+    email: string | null;
     irpf_applies: boolean;
     surcharge_applies: boolean;
 }

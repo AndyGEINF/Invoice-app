@@ -2,13 +2,16 @@ import { usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { ProductPicker } from '@/components/products/ProductPicker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { decimalForInput } from '@/lib/decimals';
 import { formatPercentage } from '@/lib/money';
 import { cn } from '@/lib/utils';
+import type { ProductRow } from '@/types/catalog';
 import type { DraftDefaults, DraftLine } from '@/types/documents';
 
 /** Valor del desplegable de exención cuando no hay ninguna (Radix no admite ''). */
@@ -86,6 +89,36 @@ export function LineEditor({
                 surcharge_rate: surchargeFor(defaults.vat_rate),
                 irpf_applies: showIrpf,
                 exemption_code: null,
+            },
+        ]);
+    }
+
+    /**
+     * Línea a partir de un producto del catálogo: copia descripción, precio, unidad
+     * e IVA (el producto queda solo como referencia). Si la última línea está
+     * vacía, la rellena en vez de añadir otra.
+     */
+    function addProduct(product: ProductRow) {
+        const vatRate = product.exemption_code ? ZERO_RATE : product.vat_rate;
+        const last = lines.at(-1);
+        const reuseLast = last !== undefined && !last.id && last.description.trim() === '' && last.unit_price.trim() === '';
+        const base = reuseLast ? lines.slice(0, -1) : lines;
+
+        commit([
+            ...base,
+            {
+                id: null,
+                position: base.length + 1,
+                product_id: product.id,
+                description: product.line_description,
+                quantity: '1',
+                unit: product.unit,
+                unit_price: decimalForInput(product.unit_price),
+                discount_percent: '0',
+                vat_rate: vatRate,
+                surcharge_rate: surchargeFor(vatRate),
+                irpf_applies: showIrpf && product.irpf_applicable,
+                exemption_code: product.exemption_code,
             },
         ]);
     }
@@ -245,10 +278,13 @@ export function LineEditor({
                 })}
             </ol>
 
-            <Button type="button" variant="ghost" className="mt-2 text-primary" onClick={add}>
-                <Plus aria-hidden />
-                Añadir línea
-            </Button>
+            <div className="mt-2 flex flex-wrap items-center gap-1">
+                <Button type="button" variant="ghost" className="text-primary" onClick={add}>
+                    <Plus aria-hidden />
+                    Añadir línea
+                </Button>
+                <ProductPicker onSelect={addProduct} />
+            </div>
             <FieldError message={errors.lines} />
         </div>
     );

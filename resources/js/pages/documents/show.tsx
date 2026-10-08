@@ -1,7 +1,8 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
+import { CustomerPicker } from '@/components/customers/CustomerPicker';
 import { DocumentPaper, PaperCustomerAddress } from '@/components/documents/DocumentPaper';
 import { DocumentSidePanel } from '@/components/documents/DocumentSidePanel';
 import { FieldError, LineEditor } from '@/components/documents/LineEditor';
@@ -9,7 +10,6 @@ import { TaxBreakdown } from '@/components/documents/TaxBreakdown';
 import { StatusPill } from '@/components/StatusPill';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { decimalForInput, decimalForServer } from '@/lib/decimals';
 import { DOCUMENT_LIST_TITLES, documentUrl } from '@/lib/documents';
@@ -32,7 +32,8 @@ interface Props {
     document: DocumentDetail | null;
     paper: PaperView;
     form: DraftForm | null;
-    customers: CustomerOption[];
+    /** Cliente actual del borrador; los demás se buscan con CustomerPicker. */
+    customer: CustomerOption | null;
     defaults: DraftDefaults;
     events: DocumentEventView[];
     sends: DocumentSendView[];
@@ -40,9 +41,6 @@ interface Props {
     can: DocumentAbilities;
     series: SeriesOption[];
 }
-
-/** Valor del selector de cliente para "sin cliente" (Radix no admite ''). */
-const NO_CUSTOMER = 'none';
 
 const ZERO_RATE = '0.00';
 
@@ -105,11 +103,12 @@ function toPayload(data: DraftData): DraftData {
     };
 }
 
-function DraftEditor({ type, document, paper, form: saved, customers, defaults, can, events, sends, related, series }: Props & { form: DraftForm }) {
+function DraftEditor({ type, document, paper, form: saved, customer: savedCustomer, defaults, can, events, sends, related, series }: Props & { form: DraftForm }) {
     const { invoiceConfig } = usePage().props;
     const form = useForm<DraftData>(toData(saved));
     const errors = form.errors as Record<string, string>;
-    const customer = customers.find((option) => option.id === form.data.customer_id) ?? null;
+    // El cliente elegido en el buscador (con lo que cambia el formulario); el id va en form.customer_id.
+    const [customer, setCustomer] = useState<CustomerOption | null>(savedCustomer);
     const isNew = document === null;
     const stale = isNew || form.isDirty;
 
@@ -152,9 +151,8 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
     });
 
     /** Al cambiar de cliente, las líneas heredan si se le aplica recargo o retención. */
-    function changeCustomer(value: string) {
-        const next = customers.find((option) => option.id === value) ?? null;
-
+    function changeCustomer(next: CustomerOption | null) {
+        setCustomer(next);
         form.setData({
             ...form.data,
             customer_id: next?.id ?? null,
@@ -201,20 +199,7 @@ function DraftEditor({ type, document, paper, form: saved, customers, defaults, 
                     }
                     customer={
                         <div className="max-w-sm">
-                            <Select value={form.data.customer_id ?? NO_CUSTOMER} onValueChange={changeCustomer}>
-                                <SelectTrigger className="w-full" aria-label="Cliente" aria-invalid={Boolean(errors.customer_id)}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={NO_CUSTOMER}>Sin cliente (factura simplificada)</SelectItem>
-                                    {customers.map((option) => (
-                                        <SelectItem key={option.id} value={option.id}>
-                                            {option.legal_name}
-                                            {option.tax_id ? <span className="text-muted-foreground"> · {option.tax_id}</span> : null}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <CustomerPicker value={customer} onChange={changeCustomer} invalid={Boolean(errors.customer_id)} />
                             <FieldError message={errors.customer_id} />
                             {form.data.customer_id && form.data.customer_id === saved.customer_id ? (
                                 <PaperCustomerAddress paper={paper} />

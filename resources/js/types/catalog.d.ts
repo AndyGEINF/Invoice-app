@@ -89,6 +89,8 @@ export interface ProductRow {
     type_label: string;
     name: string;
     description: string | null;
+    /** Lo que se copia a la línea del documento: nombre y, debajo, la descripción. */
+    line_description: string;
     /** Texto decimal con punto y tres decimales: "33.333". */
     unit_price: string;
     unit_price_formatted: string;

@@ -12,6 +12,7 @@ use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Series;
 use App\Domain\Issuer\Issuer;
 use App\Http\Presenters\PrintableDocument;
+use App\Http\Resources\CustomerOption;
 use App\Http\Resources\DocumentDetail;
 use App\Http\Resources\DraftFormResource;
 use Illuminate\Http\Request;
@@ -29,9 +30,6 @@ use Inertia\Response;
  */
 final class DocumentPage
 {
-    /** Clientes que se ofrecen en el selector hasta que llegue la búsqueda (T077). */
-    public const int MAX_CUSTOMERS = 500;
-
     public static function render(Request $request, DocumentType $type, ?Document $document, ?string $customerId = null): Response
     {
         $editable = $document === null || $document->isEditable();
@@ -44,7 +42,7 @@ final class DocumentPage
             'form' => ! $editable ? null : ($document === null
                 ? DraftFormResource::blank(Issuer::current()->default_currency, Issuer::current()->default_irpf_rate, $customerId)
                 : (new DraftFormResource($document))->resolve($request)),
-            'customers' => $editable ? self::customerOptions() : [],
+            'customer' => $editable ? self::customerOption($request, $paperSource) : null,
             'defaults' => self::defaults(),
             'events' => $document === null ? [] : self::events($document),
             'sends' => $document === null ? [] : self::sends($document),
@@ -101,26 +99,16 @@ final class DocumentPage
     }
 
     /**
-     * Clientes activos para el selector, con lo que cambia el formulario: si se
-     * les aplica retención o recargo.
+     * Cliente actual del borrador para el selector. El resto se buscan contra
+     * `/customers/search` a medida que se escribe.
      *
-     * @return list<array<string, mixed>>
+     * @return array<string, mixed>|null
      */
-    private static function customerOptions(): array
+    private static function customerOption(Request $request, Document $document): ?array
     {
-        return Customer::query()
-            ->whereNull('archived_at')
-            ->orderBy('legal_name')
-            ->limit(self::MAX_CUSTOMERS)
-            ->get()
-            ->map(static fn (Customer $customer): array => [
-                'id' => $customer->id,
-                'legal_name' => $customer->legal_name,
-                'tax_id' => $customer->tax_id,
-                'irpf_applies' => $customer->appliesIrpf(),
-                'surcharge_applies' => $customer->surcharge_applies,
-            ])
-            ->all();
+        $customer = $document->customer;
+
+        return $customer === null ? null : (new CustomerOption($customer))->resolve($request);
     }
 
     /** @return array<string, string> */
