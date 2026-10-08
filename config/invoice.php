@@ -92,4 +92,17 @@ return [
         'brand_colors' => ['#2563eb', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0d9488', '#334155'],
     ],
 
+    // Validación de números de IVA intracomunitarios (siempre en cola, nunca bloquea).
+    'vies' => [
+        // "rest" consulta VIES de verdad; "fake" responde siempre válido sin red (tests).
+        'driver' => env('VIES_DRIVER', 'rest'),
+        'endpoint' => env('VIES_ENDPOINT', 'https://ec.europa.eu/taxation_customs/vies/rest-api'),
+        'timeout_seconds' => 5,
+        // Un número validado hace menos de esto no se vuelve a consultar.
+        'revalidate_after_days' => 30,
+        'tries' => 5,
+        // Espera antes de cada reintento si VIES no responde (crece de forma exponencial).
+        'backoff_seconds' => [30, 120, 480, 1920],
+    ],
+
 ];

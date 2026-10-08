@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Customers\Contracts\VatNumberValidator;
 use App\Domain\Documents\CreditNote;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentLine;
@@ -15,8 +16,12 @@ use App\Domain\Shared\Contracts\Clock;
 use App\Domain\Tax\SpanishTaxCalculator;
 use App\Domain\Tax\TaxCalculator;
 use App\Infrastructure\Time\SystemClock;
+use App\Infrastructure\Vies\FakeVatNumberValidator;
+use App\Infrastructure\Vies\ViesRestValidator;
 use App\Observers\DocumentChildObserver;
 use App\Observers\DocumentObserver;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Client\Factory as HttpClient;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -25,8 +30,8 @@ use Illuminate\Support\ServiceProvider;
  * Conecta los puertos del dominio con sus adaptadores.
  *
  * El dominio solo conoce interfaces; aquí se decide qué implementación usa cada
- * entorno (constitución, principio III). Los adaptadores de PDF, almacenamiento
- * y VIES se registran cuando se implementan (T074, T086).
+ * entorno (constitución, principio III). Los adaptadores de PDF y almacenamiento
+ * se registran cuando se implementan (T086).
  *
  * Los listeners de app/Listeners (p. ej. RecordDocumentEvent) no se registran
  * aquí: Laravel los descubre por el tipo de su método handle, y registrarlos
@@ -34,6 +39,9 @@ use Illuminate\Support\ServiceProvider;
  */
 final class AppServiceProvider extends ServiceProvider
 {
+    /** Valor de `invoice.vies.driver` que usa el VIES de mentira. */
+    private const string FAKE_DRIVER = 'fake';
+
     /** @var array<class-string, class-string> */
     public array $singletons = [
         Clock::class => SystemClock::class,
@@ -42,7 +50,15 @@ final class AppServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        //
+        $this->app->singleton(VatNumberValidator::class, static fn (Application $app): VatNumberValidator => match (config('invoice.vies.driver')) {
+            self::FAKE_DRIVER => FakeVatNumberValidator::valid(),
+            default => new ViesRestValidator(
+                $app->make(HttpClient::class),
+                $app->make(Clock::class),
+                (string) config('invoice.vies.endpoint'),
+                (int) config('invoice.vies.timeout_seconds'),
+            ),
+        });
     }
 
     public function boot(): void
