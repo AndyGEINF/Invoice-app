@@ -48,6 +48,7 @@ final class IssuerRequest extends FormRequest
                 'mimes:'.implode(',', config('invoice.issuer.logo_mimes')),
                 'max:'.config('invoice.issuer.logo_max_kb'),
             ],
+            'brand_color' => ['nullable', 'string', 'regex:'.Issuer::BRAND_COLOR_PATTERN],
             'tax_id' => ['required', 'string', $this->validSpanishTaxId(...)],
             'address.street' => ['required', 'string', 'max:'.self::MAX_ADDRESS_LENGTH],
             'address.city' => ['required', 'string', 'max:'.self::MAX_ADDRESS_LENGTH],
@@ -88,6 +89,7 @@ final class IssuerRequest extends FormRequest
     {
         return [
             'logo.required' => 'Sube el logotipo: es obligatorio para emitir facturas.',
+            'brand_color.regex' => 'Elige un color con el formato #RRGGBB.',
         ];
     }
 

@@ -266,6 +266,8 @@ export interface PaperView {
     exemptions: string[];
     notes: string | null;
     footer: string | null;
+    /** Color de marca `#RRGGBB` del emisor (el congelado si ya está emitido). */
+    brandColor: string;
 }
 
 /** Cliente del selector del borrador. */

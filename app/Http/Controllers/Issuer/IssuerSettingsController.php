@@ -33,6 +33,7 @@ final class IssuerSettingsController extends Controller
                 'logo_url' => $issuer->logo_path !== null && $issuer->logo_path !== ''
                     ? Storage::disk(config('invoice.storage.logos_disk'))->url($issuer->logo_path)
                     : null,
+                'brand_color' => $issuer->brand_color,
                 'tax_id' => $issuer->tax_id,
                 'address' => $address->toArray(),
                 'vat_regime' => $issuer->vat_regime->value,
@@ -50,6 +51,7 @@ final class IssuerSettingsController extends Controller
                 ),
                 'irpf_rates' => config('invoice.tax.irpf_rates'),
                 'logo_max_kb' => config('invoice.issuer.logo_max_kb'),
+                'brand_colors' => config('invoice.issuer.brand_colors'),
             ],
         ]);
     }

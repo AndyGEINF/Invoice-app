@@ -88,6 +88,8 @@ return [
         // Logotipo obligatorio para emitir.
         'logo_max_kb' => 2048,
         'logo_mimes' => ['png', 'jpg', 'jpeg', 'svg'],
+        // Muestras del selector de color de marca (también se puede elegir otro).
+        'brand_colors' => ['#2563eb', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0d9488', '#334155'],
     ],
 
 ];

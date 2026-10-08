@@ -36,7 +36,8 @@ export function DocumentPaper({
     const { issuer } = paper;
 
     return (
-        <article className={cn('rounded-2xl border bg-card p-4 shadow-sm sm:p-6 md:p-10', className)}>
+        // La franja superior lleva el color de marca, como la cabecera del PDF.
+        <article className={cn('rounded-2xl border border-t-4 bg-card p-4 shadow-sm sm:p-6 md:p-10', className)} style={{ borderTopColor: paper.brandColor }}>
             <header className="flex flex-wrap items-start justify-between gap-6">
                 <div className="flex min-w-0 items-start gap-4">
                     {issuer.logo ? (

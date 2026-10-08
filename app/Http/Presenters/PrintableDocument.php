@@ -52,6 +52,7 @@ final readonly class PrintableDocument
         public array $exemptions,
         public ?string $notes,
         public ?string $footer,
+        public string $brandColor = Issuer::DEFAULT_BRAND_COLOR,
     ) {}
 
     /**
@@ -91,6 +92,8 @@ final readonly class PrintableDocument
             exemptions: self::exemptionTexts($document),
             notes: $document->notes,
             footer: $issuer['invoice_footer'] ?? null,
+            // Validado contra #RRGGBB: la plantilla lo puede usar tal cual en el CSS.
+            brandColor: Issuer::brandColorOf($issuer),
         );
     }
 

@@ -41,6 +41,10 @@ final readonly class UpdateIssuer
             'invoice_footer' => $data->invoiceFooter,
         ]);
 
+        if ($data->brandColor !== null) {
+            $issuer->brand_color = $data->brandColor;
+        }
+
         if ($data->logo !== null) {
             $issuer->logo_path = $this->storeLogo($data->logo);
         }

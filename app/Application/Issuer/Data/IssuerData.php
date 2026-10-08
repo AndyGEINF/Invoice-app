@@ -11,7 +11,8 @@ use App\Domain\Shared\TaxId;
 
 /**
  * Datos del emisor tal como llegan del formulario de ajustes, ya validados.
- * Sin logotipo nuevo (`logo` null) se conserva el que hubiera.
+ * Sin logotipo nuevo (`logo` null) se conserva el que hubiera; lo mismo con el
+ * color de marca (`brandColor` null).
  */
 final readonly class IssuerData
 {
@@ -27,6 +28,7 @@ final readonly class IssuerData
         public ?string $website = null,
         public ?string $invoiceFooter = null,
         public ?LogoFile $logo = null,
+        public ?string $brandColor = null,
     ) {}
 
     /** @param array<string, mixed> $form */
@@ -47,7 +49,16 @@ final readonly class IssuerData
             website: self::stringOrNull($form['website'] ?? null),
             invoiceFooter: self::stringOrNull($form['invoice_footer'] ?? null),
             logo: $logo,
+            brandColor: self::brandColor($form['brand_color'] ?? null),
         );
+    }
+
+    /** "#2563EB" y "#2563eb" son el mismo color: se guarda en minúsculas. */
+    private static function brandColor(mixed $value): ?string
+    {
+        $color = self::stringOrNull($value);
+
+        return $color !== null ? strtolower($color) : null;
     }
 
     private static function stringOrNull(mixed $value): ?string

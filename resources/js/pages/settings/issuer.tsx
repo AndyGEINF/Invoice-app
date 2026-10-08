@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ISSUER_MISSING_LABELS } from '@/lib/issuer';
+import { cn } from '@/lib/utils';
 import type { IssuerMissingField } from '@/types';
 
 interface IssuerAddress {
@@ -27,6 +28,7 @@ interface Props {
         name: string | null;
         company_name: string | null;
         logo_url: string | null;
+        brand_color: string;
         tax_id: string | null;
         address: IssuerAddress;
         vat_regime: string;
@@ -37,7 +39,7 @@ interface Props {
         invoice_footer: string | null;
         missing: IssuerMissingField[];
     };
-    options: { vat_regimes: { value: string; label: string }[]; irpf_rates: string[]; logo_max_kb: number };
+    options: { vat_regimes: { value: string; label: string }[]; irpf_rates: string[]; logo_max_kb: number; brand_colors: string[] };
 }
 
 const KB_PER_MB = 1024;
@@ -51,6 +53,7 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
         name: issuer.name ?? '',
         company_name: issuer.company_name ?? '',
         logo: null as File | null,
+        brand_color: issuer.brand_color,
         tax_id: issuer.tax_id ?? '',
         address: issuer.address,
         vat_regime: issuer.vat_regime,
@@ -131,6 +134,12 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                                     Tus facturas saldrán a nombre de <span className="font-medium text-foreground">{legalName}</span>.
                                 </p>
                             ) : null}
+                            <BrandColorField
+                                value={form.data.brand_color}
+                                swatches={options.brand_colors}
+                                error={errors.brand_color}
+                                onChange={(color) => form.setData('brand_color', color)}
+                            />
                         </div>
 
                         <Field id="logo" label="Logotipo" required error={errors.logo}>
@@ -247,6 +256,49 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                 </div>
             </form>
         </>
+    );
+}
+
+/** Muestras de color más un selector libre. El color tiñe la cabecera, los títulos y el total del PDF. */
+function BrandColorField({ value, swatches, error, onChange }: { value: string; swatches: string[]; error?: string; onChange: (color: string) => void }) {
+    const isCustom = !swatches.includes(value.toLowerCase());
+
+    return (
+        <fieldset>
+            <legend className="mb-1.5 text-sm font-medium">Color de marca</legend>
+            <div className="flex flex-wrap items-center gap-2">
+                {swatches.map((swatch) => {
+                    const selected = swatch === value.toLowerCase();
+
+                    return (
+                        <button
+                            key={swatch}
+                            type="button"
+                            onClick={() => onChange(swatch)}
+                            aria-label={`Color ${swatch}`}
+                            aria-pressed={selected}
+                            className={cn(
+                                'size-8 rounded-full border-2 border-card ring-offset-2 ring-offset-card transition-shadow focus-visible:outline-none',
+                                selected ? 'ring-2 ring-foreground' : 'hover:ring-2 hover:ring-border focus-visible:ring-2 focus-visible:ring-ring',
+                            )}
+                            style={{ backgroundColor: swatch }}
+                        />
+                    );
+                })}
+                <label
+                    className={cn(
+                        'relative flex h-8 cursor-pointer items-center gap-2 rounded-full border px-3 text-sm text-muted-foreground transition-colors hover:text-foreground',
+                        isCustom && 'border-foreground text-foreground',
+                    )}
+                >
+                    <span className="size-4 rounded-full border" style={{ backgroundColor: value }} aria-hidden />
+                    {isCustom ? value.toLowerCase() : 'Otro'}
+                    <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="sr-only" aria-label="Elegir otro color" />
+                </label>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Se usa en la cabecera, los títulos y el total de tus facturas.</p>
+            <FieldError message={error} />
+        </fieldset>
     );
 }
 

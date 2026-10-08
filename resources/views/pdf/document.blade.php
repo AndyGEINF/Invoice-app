@@ -11,6 +11,9 @@
     <style>
         @page { size: A4; margin: 16mm 14mm 18mm; }
 
+        /* Color de marca del emisor (el congelado al emitir). Viene validado como #RRGGBB. */
+        :root { --brand: {{ $doc->brandColor }}; }
+
         * { box-sizing: border-box; }
 
         body {
@@ -48,14 +51,21 @@
             pointer-events: none;
         }
 
-        .header { display: flex; justify-content: space-between; gap: 12mm; margin-bottom: 8mm; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12mm;
+            margin-bottom: 8mm;
+            padding-bottom: 5mm;
+            border-bottom: 0.8mm solid var(--brand);
+        }
         .issuer { max-width: 55%; }
         .logo { display: block; max-height: 22mm; max-width: 60mm; margin-bottom: 3mm; }
         .issuer-name { font-size: 12pt; font-weight: 700; }
         .muted { color: #59636e; }
 
         .doc-meta { text-align: right; }
-        .doc-meta h1 { margin: 0; font-size: 18pt; letter-spacing: 0.02em; }
+        .doc-meta h1 { margin: 0; font-size: 18pt; letter-spacing: 0.02em; color: var(--brand); }
         .number { font-size: 12pt; font-weight: 700; margin: 1mm 0 3mm; }
         .draft-note { color: #b42318; font-weight: 700; }
         .dates { margin-left: auto; border-collapse: collapse; }
@@ -63,7 +73,7 @@
         .dates td:first-child { color: #59636e; }
 
         .box { border: 1px solid #d0d7de; border-radius: 2mm; padding: 3mm 4mm; margin-bottom: 6mm; }
-        .box h2, .notes h2 { margin: 0 0 1mm; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: #59636e; }
+        .box h2, .notes h2 { margin: 0 0 1mm; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand); }
         .customer-name { font-weight: 700; }
 
         .rectifies { margin: 0 0 6mm; padding: 2mm 4mm; background: #fff8e1; border-left: 1mm solid #d4a72c; }
@@ -75,7 +85,7 @@
             text-transform: uppercase;
             letter-spacing: 0.04em;
             color: #59636e;
-            border-bottom: 1px solid #1f2328;
+            border-bottom: 1px solid var(--brand);
             padding: 1.5mm 1.5mm;
         }
         table.lines td { padding: 1.8mm 1.5mm; border-bottom: 1px solid #eaeef2; vertical-align: top; }
@@ -89,7 +99,7 @@
         table.taxes td { padding: 1mm 2mm; }
         table.totals { min-width: 65mm; }
         table.totals td { padding: 1mm 0 1mm 4mm; }
-        table.totals tr.grand td { border-top: 1px solid #1f2328; font-size: 13pt; font-weight: 700; padding-top: 2mm; }
+        table.totals tr.grand td { border-top: 1px solid var(--brand); color: var(--brand); font-size: 13pt; font-weight: 700; padding-top: 2mm; }
 
         .global-discount { margin: -4mm 0 6mm; color: #59636e; }
         .exemptions { margin: 6mm 0 0; padding-left: 4mm; color: #59636e; font-size: 9pt; }

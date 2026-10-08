@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $name
  * @property string|null $company_name
  * @property string|null $logo_path Ruta relativa al disco de logotipos (config invoice.storage.logos_disk).
+ * @property string $brand_color Color de marca `#RRGGBB` del PDF.
  * @property string|null $tax_id
  * @property TaxIdType|null $tax_id_type
  * @property Address|null $address
@@ -49,8 +50,17 @@ final class Issuer extends Model
 
     use HasUuidPrimaryKey;
 
-    /** Versión del formato del snapshot congelado en cada documento. */
-    public const int SNAPSHOT_VERSION = 1;
+    /**
+     * Versión del formato del snapshot congelado en cada documento.
+     * 2 añade `brand_color`; los snapshots de la versión 1 se leen con el color por defecto.
+     */
+    public const int SNAPSHOT_VERSION = 2;
+
+    /** Color de marca si el emisor no elige otro: el azul de la aplicación. */
+    public const string DEFAULT_BRAND_COLOR = '#2563eb';
+
+    /** Formato del color de marca: `#RRGGBB`. */
+    public const string BRAND_COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/';
 
     /** Claves de los datos que faltan, en el orden en que se piden en la interfaz. */
     public const string MISSING_NAME = 'name';
@@ -75,6 +85,7 @@ final class Issuer extends Model
         'name',
         'company_name',
         'logo_path',
+        'brand_color',
         'tax_id',
         'tax_id_type',
         'address',
@@ -89,6 +100,7 @@ final class Issuer extends Model
 
     protected $attributes = [
         'singleton' => true,
+        'brand_color' => self::DEFAULT_BRAND_COLOR,
         'vat_regime' => 'general',
         'default_irpf_rate' => '0.00',
         'default_currency' => 'EUR',
@@ -173,6 +185,24 @@ final class Issuer extends Model
         }
     }
 
+    public static function isValidBrandColor(?string $color): bool
+    {
+        return $color !== null && preg_match(self::BRAND_COLOR_PATTERN, $color) === 1;
+    }
+
+    /**
+     * Color de marca de un snapshot. Los de la versión 1 no lo tienen: se
+     * imprimen con el color por defecto.
+     *
+     * @param  array<string, mixed>  $snapshot
+     */
+    public static function brandColorOf(array $snapshot): string
+    {
+        $color = $snapshot['brand_color'] ?? null;
+
+        return is_string($color) && self::isValidBrandColor($color) ? strtolower($color) : self::DEFAULT_BRAND_COLOR;
+    }
+
     /**
      * Copia congelada de los datos que aparecen en la factura.
      *
@@ -186,6 +216,7 @@ final class Issuer extends Model
             'contact_name' => $this->name,
             'company_name' => $this->company_name,
             'logo_path' => $this->logo_path,
+            'brand_color' => $this->brand_color,
             'tax_id' => $this->tax_id,
             'tax_id_type' => $this->tax_id_type?->value,
             'address' => $this->address?->toArray(),

@@ -114,13 +114,14 @@ describe('snapshot', function () {
         $snapshot = $issuer->refresh()->toSnapshot();
 
         expect($snapshot)->toMatchArray([
-            'snapshot_version' => 1,
+            'snapshot_version' => Issuer::SNAPSHOT_VERSION,
             'legal_name' => 'Demo SL',
             'contact_name' => 'Andy Moreno',
             'company_name' => 'Demo SL',
             'logo_path' => 'logos/abc123.png',
             'tax_id' => 'B12345674',
             'vat_regime' => 'general',
+            'brand_color' => Issuer::DEFAULT_BRAND_COLOR,
         ])->and($snapshot['address'])->toMatchArray(['city' => 'Girona', 'country' => 'ES']);
     });
 
