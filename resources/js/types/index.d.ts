@@ -32,6 +32,8 @@ export interface FlashData {
     success?: string;
     error?: string;
     warnings?: string[];
+    /** Al guardar un cliente con un NIF que ya tiene otro (ver types/catalog.d.ts). */
+    duplicate_warning?: { id: string; legal_name: string; tax_id: string };
 }
 
 declare module '@inertiajs/core' {

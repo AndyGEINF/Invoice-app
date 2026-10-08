@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Customers;
 
 use App\Domain\Customers\Customer;
 use App\Domain\Documents\Document;
+use App\Domain\Shared\Address;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CustomerForm;
 use App\Http\Resources\DocumentRow;
@@ -36,7 +37,7 @@ final class CustomerShowController extends Controller
                 'display_name' => $customer->displayName(),
                 'kind_label' => $customer->kind->label(),
                 'tax_id_type_label' => $customer->tax_id_type?->label(),
-                'address_line' => $customer->billing_address->isEmpty() ? null : $customer->billing_address->singleLine(),
+                'address_line' => self::addressLine($customer->billing_address),
             ],
             'documents' => Document::query()
                 ->where('customer_id', $customer->id)
@@ -51,6 +52,18 @@ final class CustomerShowController extends Controller
                 'status' => self::viesStatus($customer),
             ],
         ]);
+    }
+
+    /** Dirección en una línea; el país solo si no es España, como en el PDF. */
+    private static function addressLine(Address $address): ?string
+    {
+        if ($address->street === '' && $address->city === '' && $address->postalCode === '') {
+            return null;
+        }
+
+        return $address->isSpanish()
+            ? Address::of($address->street, $address->city, $address->postalCode, $address->province, '')->singleLine()
+            : $address->singleLine();
     }
 
     private static function viesStatus(Customer $customer): string

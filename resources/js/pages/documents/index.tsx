@@ -1,10 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Clock, PencilLine, Plus, Search } from 'lucide-react';
+import { Clock, PencilLine, Plus, Search } from 'lucide-react';
 import type { ComponentType } from 'react';
-import { useEffect, useRef, useState } from 'react';
 
 import { RowStatus } from '@/components/documents/StatusBadge';
 import { PageHeader } from '@/components/PageHeader';
+import { Pagination } from '@/components/Pagination';
 import { StatCard } from '@/components/StatCard';
 import type { Tone } from '@/components/StatusPill';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate } from '@/lib/dates';
 import { DOCUMENT_LIST_TITLES, NEW_DOCUMENT_LABELS, countLabel, documentUrl } from '@/lib/documents';
+import { useDebouncedSearch } from '@/lib/use-debounced-search';
 import { cn } from '@/lib/utils';
 import type {
     AlertGroup,
@@ -41,17 +42,12 @@ interface Props {
     options: { statuses: Option[]; payment_statuses: Option[] };
 }
 
-/** Espera tras la última tecla antes de buscar, para no lanzar una petición por letra. */
-const SEARCH_DEBOUNCE_MS = 300;
-
 /** Valor de los desplegables para "sin filtro" (Radix no admite valores vacíos). */
 const ALL = 'all';
 
 type FilterKey = keyof DocumentFilters;
 
 export default function DocumentIndex({ type, documents, filters, totals, alerts, series, options }: Props) {
-    const [search, setSearch] = useState(filters.q ?? '');
-    const firstRender = useRef(true);
     const newLabel = NEW_DOCUMENT_LABELS[type.value];
 
     function applyFilters(changes: Partial<Record<FilterKey, string | null>>) {
@@ -62,19 +58,7 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
         router.get(documentUrl(type), next, { preserveState: true, preserveScroll: true, replace: true });
     }
 
-    useEffect(() => {
-        if (firstRender.current) {
-            firstRender.current = false;
-
-            return;
-        }
-
-        const timer = window.setTimeout(() => applyFilters({ q: search }), SEARCH_DEBOUNCE_MS);
-
-        return () => window.clearTimeout(timer);
-        // Solo reacciona a lo que se escribe; el resto de filtros van en `applyFilters`.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
+    const [search, setSearch] = useDebouncedSearch(filters.q ?? '', (q) => applyFilters({ q }));
 
     const hasFilters = Object.values(filters).some((value) => value !== null);
 
@@ -234,17 +218,7 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                 </div>
             )}
 
-            {documents.last_page > 1 ? (
-                <nav aria-label="Paginación" className="mt-4 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                        {documents.from}–{documents.to} de {documents.total}
-                    </span>
-                    <div className="flex gap-2">
-                        <PageLink href={documents.prev_page_url} label="Anterior" icon="prev" />
-                        <PageLink href={documents.next_page_url} label="Siguiente" icon="next" />
-                    </div>
-                </nav>
-            ) : null}
+            <Pagination page={documents} />
 
             {alerts.overdue.count > 0 || alerts.drafts.count > 0 ? (
                 <section aria-label="Avisos" className="mt-6 grid gap-4 md:grid-cols-2">
@@ -371,27 +345,5 @@ function FilterSelect({
                 </SelectContent>
             </Select>
         </div>
-    );
-}
-
-function PageLink({ href, label, icon }: { href: string | null; label: string; icon: 'prev' | 'next' }) {
-    const Icon = icon === 'prev' ? ChevronLeft : ChevronRight;
-
-    if (!href) {
-        return (
-            <Button variant="outline" size="sm" disabled>
-                <Icon aria-hidden />
-                {label}
-            </Button>
-        );
-    }
-
-    return (
-        <Button variant="outline" size="sm" asChild>
-            <Link href={href} preserveScroll>
-                <Icon aria-hidden />
-                {label}
-            </Link>
-        </Button>
     );
 }

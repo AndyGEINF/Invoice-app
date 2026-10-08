@@ -1,14 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
 import { ImageUp, Save, TriangleAlert } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
-import type { ReactNode } from 'react';
 
 import { FieldError } from '@/components/documents/LineEditor';
+import { Field, FormSection } from '@/components/FormField';
 import { PageHeader } from '@/components/PageHeader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ISSUER_MISSING_LABELS } from '@/lib/issuer';
@@ -110,7 +109,7 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                     </Alert>
                 ) : null}
 
-                <Section title="Cómo te verán tus clientes" description="Cabecera de cada factura.">
+                <FormSection title="Cómo te verán tus clientes" description="Cabecera de cada factura.">
                     <div className="grid gap-6 md:grid-cols-[1fr_16rem]">
                         <div className="flex flex-col gap-4">
                             <Field id="name" label="Tu nombre" required error={errors.name}>
@@ -168,9 +167,9 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                             </p>
                         </Field>
                     </div>
-                </Section>
+                </FormSection>
 
-                <Section title="Datos fiscales" description="Obligatorios en una factura.">
+                <FormSection title="Datos fiscales" description="Obligatorios en una factura.">
                     <div className="grid gap-4 md:grid-cols-2">
                         <Field id="tax_id" label="NIF" required error={errors.tax_id}>
                             <Input id="tax_id" value={form.data.tax_id} onChange={(event) => form.setData('tax_id', event.target.value.toUpperCase())} />
@@ -229,9 +228,9 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                             />
                         </Field>
                     </div>
-                </Section>
+                </FormSection>
 
-                <Section title="Contacto y pie de factura" description="Opcional.">
+                <FormSection title="Contacto y pie de factura" description="Opcional.">
                     <div className="grid gap-4 md:grid-cols-3">
                         <Field id="email" label="Email" error={errors.email}>
                             <Input id="email" type="email" value={form.data.email} onChange={(event) => form.setData('email', event.target.value)} autoComplete="email" />
@@ -246,7 +245,7 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                             <Textarea id="invoice_footer" value={form.data.invoice_footer} onChange={(event) => form.setData('invoice_footer', event.target.value)} rows={3} />
                         </Field>
                     </div>
-                </Section>
+                </FormSection>
 
                 <div className="flex justify-end pb-6">
                     <Button type="submit" disabled={form.processing}>
@@ -299,45 +298,5 @@ function BrandColorField({ value, swatches, error, onChange }: { value: string; 
             <p className="mt-1 text-xs text-muted-foreground">Se usa en la cabecera, los títulos y el total de tus facturas.</p>
             <FieldError message={error} />
         </fieldset>
-    );
-}
-
-function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
-    return (
-        <section className="mb-6 rounded-xl border bg-card p-5 md:p-6">
-            <h2 className="font-semibold">{title}</h2>
-            <p className="mb-4 text-sm text-muted-foreground">{description}</p>
-            {children}
-        </section>
-    );
-}
-
-function Field({
-    id,
-    label,
-    required,
-    hint,
-    error,
-    className,
-    children,
-}: {
-    id: string;
-    label: string;
-    required?: boolean;
-    hint?: string;
-    error?: string;
-    className?: string;
-    children: ReactNode;
-}) {
-    return (
-        <div className={className}>
-            <Label htmlFor={id} className="mb-1.5">
-                {label}
-                {required ? <span className="text-destructive"> *</span> : null}
-            </Label>
-            {children}
-            {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
-            <FieldError message={error} />
-        </div>
     );
 }
