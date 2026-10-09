@@ -43,6 +43,11 @@ pueden modificar una vez emitidas.
 
 **Clientes y catálogo**
 - Clientes particulares o empresas, con contactos, condiciones de pago y notas.
+- Listado de clientes con lo que debe cada uno y lo vencido, los que más facturan en el
+  año y los documentos pendientes de cobro. Al seleccionar un cliente, un panel muestra
+  su resumen y su actividad reciente.
+- Ficha de cliente con pestañas (resumen, facturas, presupuestos, datos fiscales y
+  contactos) y un bloque de notas siempre a la vista.
 - Validación del **NIF, NIE y CIF** con su dígito de control, y de los números de IVA europeos.
 - Comprobación automática en **VIES** (el registro europeo de operadores) en segundo plano. Si VIES no responde, se reintenta más tarde y nunca bloquea la facturación.
 - Aviso si das de alta un NIF que ya existe, con opción de abrir el existente o continuar.
@@ -65,7 +70,7 @@ pueden modificar una vez emitidas.
 |---|---|:---:|
 | 1–3 | Base del proyecto, motor de impuestos, emisión de facturas | ✅ |
 | 4 | Datos del emisor, logotipo y color de marca | ✅ |
-| 5 | Clientes, catálogo y validación VIES | ✅ (falta el rediseño de la ficha de cliente) |
+| 5 | Clientes, catálogo y validación VIES | ✅ |
 | 6 | **Presupuestos** y conversión a factura con un clic | ⏳ |
 | 7 | **PDF** definitivo y **envío por email** al cliente, en segundo plano | ⏳ |
 | 8 | **Facturas rectificativas** (por sustitución y por diferencias) | ⏳ |
