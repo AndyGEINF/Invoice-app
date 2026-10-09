@@ -4,6 +4,7 @@ use App\Domain\Documents\Enums\DocumentType;
 use App\Http\Controllers\Customers\CustomerArchiveController;
 use App\Http\Controllers\Customers\CustomerFormController;
 use App\Http\Controllers\Customers\CustomerIndexController;
+use App\Http\Controllers\Customers\CustomerNotesController;
 use App\Http\Controllers\Customers\CustomerSearchController;
 use App\Http\Controllers\Customers\CustomerShowController;
 use App\Http\Controllers\Customers\ValidateVatController;
@@ -47,6 +48,7 @@ Route::prefix('/customers')->name('customers.')->group(function (): void {
         Route::post('/archive', [CustomerArchiveController::class, 'archive'])->name('archive');
         Route::post('/restore', [CustomerArchiveController::class, 'restore'])->name('restore');
         Route::post('/validate-vat', ValidateVatController::class)->name('validate-vat');
+        Route::patch('/notes', CustomerNotesController::class)->name('notes');
     });
 });
 

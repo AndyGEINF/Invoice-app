@@ -76,9 +76,50 @@ export interface CustomerDetail extends CustomerForm {
 
 export type ViesStatus = 'not_applicable' | 'validated' | 'pending';
 
+/** Lo que debe un cliente: no cobrado (pendiente + vencido) y, aparte, lo vencido. */
+export interface UnpaidAmounts {
+    unpaid_total: number;
+    unpaid_total_formatted: string;
+    overdue_total: number;
+    overdue_total_formatted: string;
+}
+
+export type CustomerIndexRow = CustomerRow & UnpaidAmounts;
+
+export interface CustomerIndexStats {
+    pending_count: number;
+    pending_total_formatted: string;
+    overdue_count: number;
+    overdue_total_formatted: string;
+}
+
+export interface TopCustomer {
+    id: string;
+    display_name: string;
+    invoices: number;
+    billed_total_formatted: string;
+    /** Ancho de la barra respecto al primero (0–100). */
+    share_percent: number;
+}
+
+/** Resumen del cliente elegido en el listado (panel derecho). */
+export interface SelectedCustomer extends CustomerIndexRow {
+    billed_year_total_formatted: string;
+    notes: string | null;
+    recent_documents: DocumentRow[];
+}
+
+export interface CustomerShowStats extends UnpaidAmounts {
+    billed_year_count: number;
+    billed_year_total_formatted: string;
+    year: number;
+}
+
 export interface CustomerShowProps {
     customer: CustomerDetail;
-    documents: DocumentRow[];
+    stats: CustomerShowStats;
+    invoices: DocumentRow[];
+    quotes: DocumentRow[];
     vies: { validated_at: string | null; status: ViesStatus };
 }
 

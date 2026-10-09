@@ -6,18 +6,25 @@ namespace App\Http\Controllers\Customers;
 
 use App\Domain\Customers\Customer;
 use App\Domain\Documents\Document;
+use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Shared\Address;
+use App\Domain\Shared\Contracts\Clock;
 use App\Http\Controllers\Controller;
+use App\Http\Queries\InvoiceTotals;
 use App\Http\Resources\CustomerForm;
 use App\Http\Resources\DocumentRow;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** Ficha de un cliente: sus datos, sus documentos y el estado de VIES. */
+/**
+ * Ficha de un cliente: cifras (facturado este año, pendiente y vencido), sus
+ * facturas y presupuestos, datos fiscales, contactos, estado VIES y notas.
+ */
 final class CustomerShowController extends Controller
 {
-    /** Documentos del cliente que se cargan en la ficha. */
+    /** Documentos de cada pestaña que se cargan en la ficha. */
     private const int DOCUMENTS_LIMIT = 50;
 
     /** Estados de la validación VIES que muestra la ficha. */
@@ -27,9 +34,20 @@ final class CustomerShowController extends Controller
 
     public const string VIES_PENDING = 'pending';
 
-    public function __invoke(Request $request, Customer $customer): Response
+    public function __invoke(Request $request, Customer $customer, Clock $clock): Response
     {
+        $today = $clock->today();
         $customer->load('contacts');
+
+        $documents = fn (Builder $query): array => $query
+            ->where('customer_id', $customer->id)
+            ->with('customer')
+            ->orderByRaw('issue_date DESC NULLS FIRST')
+            ->latest('updated_at')
+            ->limit(self::DOCUMENTS_LIMIT)
+            ->get()
+            ->map(fn (Document $document): array => (new DocumentRow($document))->resolve($request))
+            ->all();
 
         return Inertia::render('customers/show', [
             'customer' => [
@@ -39,14 +57,13 @@ final class CustomerShowController extends Controller
                 'tax_id_type_label' => $customer->tax_id_type?->label(),
                 'address_line' => self::addressLine($customer->billing_address),
             ],
-            'documents' => Document::query()
-                ->where('customer_id', $customer->id)
-                ->with('customer')
-                ->latest('updated_at')
-                ->limit(self::DOCUMENTS_LIMIT)
-                ->get()
-                ->map(fn (Document $document): array => (new DocumentRow($document))->resolve($request))
-                ->all(),
+            'stats' => [
+                ...InvoiceTotals::stat('billed_year', InvoiceTotals::issuedThisYear($today, $customer->id)),
+                ...InvoiceTotals::unpaidProps(InvoiceTotals::unpaidByCustomer([$customer->id], $today)[$customer->id]),
+                'year' => (int) $today->format('Y'),
+            ],
+            'invoices' => $documents(Document::query()->where('type', '<>', DocumentType::Quote->value)),
+            'quotes' => $documents(Document::query()->where('type', DocumentType::Quote->value)),
             'vies' => [
                 'validated_at' => $customer->vies_validated_at?->toIso8601String(),
                 'status' => self::viesStatus($customer),

@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatDate, formatDateTime } from '@/lib/dates';
 import { documentUrl } from '@/lib/documents';
 import { ISSUER_MISSING_LABELS } from '@/lib/issuer';
+import { TAB_TRIGGER_CLASS } from '@/lib/tabs';
 import type {
     DocumentAbilities,
     DocumentDetail,
@@ -36,7 +37,6 @@ export interface DraftState {
 }
 
 /** La pestaña activa va en azul: es lo único con color en el panel. */
-const TAB_TRIGGER_CLASS = 'data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground';
 
 /**
  * Panel derecho de la vista de documento: General, Envíos, Historial y Notas

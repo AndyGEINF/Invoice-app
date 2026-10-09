@@ -8,9 +8,8 @@ use App\Domain\Documents\Document;
 use App\Domain\Documents\Invoice;
 use App\Domain\Issuer\Issuer;
 use App\Domain\Shared\Contracts\Clock;
-use App\Domain\Shared\Money;
+use App\Http\Queries\InvoiceTotals;
 use App\Http\Resources\DocumentRow;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,9 +33,9 @@ final class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'stats' => [
-                ...self::stat('issued_this_month', $issuedThisMonth),
-                ...self::stat('pending', Invoice::query()->unpaid($today)),
-                ...self::stat('overdue', Invoice::query()->overdue($today)),
+                ...InvoiceTotals::stat('issued_this_month', $issuedThisMonth),
+                ...InvoiceTotals::stat('pending', Invoice::query()->unpaid($today)),
+                ...InvoiceTotals::stat('overdue', Invoice::query()->overdue($today)),
             ],
             'recent' => Document::query()
                 ->with('customer')
@@ -47,22 +46,5 @@ final class DashboardController extends Controller
                 ->all(),
             'issuer_incomplete' => ! Issuer::current()->isComplete(),
         ]);
-    }
-
-    /**
-     * `issued_this_month_count`, `issued_this_month_total` y `…_total_formatted`.
-     *
-     * @param  Builder<Invoice>  $query
-     * @return array<string, int|string>
-     */
-    private static function stat(string $key, Builder $query): array
-    {
-        $total = Money::fromCents((int) (clone $query)->sum('total'));
-
-        return [
-            "{$key}_count" => (clone $query)->count(),
-            "{$key}_total" => $total->cents,
-            "{$key}_total_formatted" => $total->format(),
-        ];
     }
 }

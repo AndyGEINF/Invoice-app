@@ -104,6 +104,13 @@ trait IsFiscalDocument
             ->where('due_date', '<', $today->toDateString());
     }
 
+    /** Emitidas sin marcar como cobradas, estén en plazo o vencidas. */
+    #[Scope]
+    protected function outstanding(Builder $query): void
+    {
+        $this->whereIssuedAndNotPaid($query);
+    }
+
     /**
      * @param  Builder<self>  $query
      * @return Builder<self>
