@@ -8,6 +8,9 @@ use App\Application\Documents\Data\DraftData;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\Enums\DocumentEventType;
 use App\Domain\Documents\Exceptions\DocumentIsImmutable;
+use App\Domain\Documents\Quote;
+use App\Domain\Documents\SnapshotFactory;
+use App\Domain\Issuer\Issuer;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -16,7 +19,10 @@ use Illuminate\Support\Facades\DB;
  */
 final readonly class UpdateDraft
 {
-    public function __construct(private DraftWriter $writer) {}
+    public function __construct(
+        private DraftWriter $writer,
+        private SnapshotFactory $snapshots,
+    ) {}
 
     public function __invoke(Document $document, DraftData $data): Document
     {
@@ -28,6 +34,13 @@ final readonly class UpdateDraft
             }
 
             $this->writer->write($document, $data);
+
+            // Un presupuesto ya enviado vuelve a congelar emisor y cliente con lo
+            // que hay ahora: lo que se reenvíe debe coincidir con lo guardado.
+            if ($document instanceof Quote && $document->hasNumber()) {
+                $this->snapshots->freezeInto($document, Issuer::current(), $document->customer()->first());
+                $document->save();
+            }
 
             $document->events()->create([
                 'event' => DocumentEventType::Updated,
