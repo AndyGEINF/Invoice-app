@@ -41,6 +41,16 @@ pueden modificar una vez emitidas.
 - **Emisión con número correlativo**: el número se asigna al emitir, nunca antes, y desde ese momento la factura queda bloqueada.
 - Vista previa del documento y listado con filtros, totales de lo filtrado y avisos de facturas vencidas y borradores sin emitir.
 
+**Presupuestos**
+- Ciclo completo: borrador, enviado (recibe número de su propia serie), aceptado o
+  rechazado.
+- Caducidad automática: pasada la fecha de validez se marca como caducado y ya no se
+  puede aceptar.
+- **Conversión a factura con un clic**: crea una factura en borrador con las mismas
+  líneas, descuentos y retención, enlazada con su presupuesto. Un presupuesto solo se
+  convierte una vez.
+- Duplicar presupuestos y facturas para no empezar de cero.
+
 **Clientes y catálogo**
 - Clientes particulares o empresas, con contactos, condiciones de pago y notas.
 - Listado de clientes con lo que debe cada uno y lo vencido, los que más facturan en el
@@ -71,7 +81,7 @@ pueden modificar una vez emitidas.
 | 1–3 | Base del proyecto, motor de impuestos, emisión de facturas | ✅ |
 | 4 | Datos del emisor, logotipo y color de marca | ✅ |
 | 5 | Clientes, catálogo y validación VIES | ✅ |
-| 6 | **Presupuestos** y conversión a factura con un clic | ⏳ |
+| 6 | **Presupuestos** y conversión a factura con un clic | ✅ |
 | 7 | **PDF** definitivo y **envío por email** al cliente, en segundo plano | ⏳ |
 | 8 | **Facturas rectificativas** (por sustitución y por diferencias) | ⏳ |
 | 9 | Series de numeración configurables (por ejemplo, una serie por actividad) | ⏳ |
