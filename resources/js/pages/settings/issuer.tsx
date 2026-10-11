@@ -144,7 +144,7 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                         <Field id="logo" label="Logotipo" required error={errors.logo}>
                             <label
                                 htmlFor="logo"
-                                className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed bg-muted/40 p-4 text-center text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                                className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed bg-muted/40 p-4 text-center text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                             >
                                 {preview ? (
                                     <img src={preview} alt="Vista previa del logotipo" className="max-h-full max-w-full object-contain" />

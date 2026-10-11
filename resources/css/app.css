@@ -116,7 +116,7 @@
     --chart-3: oklch(0.7 0.16 60);
     --chart-4: oklch(0.6 0.21 27);
     --chart-5: oklch(0.7 0.02 260);
-    /* Esquinas casi rectas: 4px en tarjetas y bloques; botones y campos, algo menos. */
+    /* Esquinas casi rectas: 4px (rounded-lg) en bloques, botones y campos. */
     --radius: 0.25rem;
     --bar-past: oklch(0.8 0.008 255);
     --bar-current: oklch(0.21 0.02 265);

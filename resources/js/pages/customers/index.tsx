@@ -110,7 +110,7 @@ export default function CustomerIndex({ customers, filters, counts, stats, top_c
                     {customers.data.length === 0 ? (
                         <EmptyState filters={filters} />
                     ) : (
-                        <div className="overflow-hidden rounded-xl border bg-card">
+                        <div className="overflow-hidden rounded-lg border bg-card">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
@@ -247,7 +247,7 @@ function SelectedPanel({ customer }: { customer: SelectedCustomer }) {
     const url = `${CUSTOMERS_URL}/${customer.id}`;
 
     return (
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-lg border bg-card">
             <div className="border-b p-4">
                 <div className="flex items-start gap-3">
                     <CustomerAvatar name={customer.display_name} className="size-11 text-base" />
@@ -319,7 +319,7 @@ function SelectedPanel({ customer }: { customer: SelectedCustomer }) {
 
 function SelectHint() {
     return (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
             <MousePointerClick aria-hidden className="size-6" />
             Selecciona un cliente para ver su resumen y su actividad.
         </div>
@@ -366,7 +366,7 @@ function DocumentList({ rows, detail, compact }: { rows: DocumentRow[]; detail: 
 
 function Card({ title, subtitle, action, children }: { title: string; subtitle: string; action?: ReactNode; children: ReactNode }) {
     return (
-        <section className="rounded-xl border bg-card p-4">
+        <section className="rounded-lg border bg-card p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                     <h2 className="font-semibold">{title}</h2>
@@ -392,7 +392,7 @@ function EmptyState({ filters }: { filters: CatalogFilters }) {
         message = 'No hay clientes archivados.';
     }
 
-    return <p className="rounded-xl border border-dashed bg-card p-10 text-center text-muted-foreground">{message}</p>;
+    return <p className="rounded-lg border border-dashed bg-card p-10 text-center text-muted-foreground">{message}</p>;
 }
 
 function HeadCell({ className, children }: { className?: string; children: string }) {

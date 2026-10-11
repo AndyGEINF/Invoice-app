@@ -69,7 +69,7 @@ export default function ProductIndex({ products, filters, counts }: Props) {
             </div>
 
             {products.data.length === 0 ? (
-                <p className="rounded-xl border border-dashed bg-card p-10 text-center text-muted-foreground">
+                <p className="rounded-lg border border-dashed bg-card p-10 text-center text-muted-foreground">
                     {filters.q
                         ? 'Nada del catálogo coincide con la búsqueda.'
                         : filters.archived
@@ -77,7 +77,7 @@ export default function ProductIndex({ products, filters, counts }: Props) {
                           : 'El catálogo está vacío. Añade lo que vendes para rellenar las facturas más rápido.'}
                 </p>
             ) : (
-                <div className="overflow-hidden rounded-xl border bg-card">
+                <div className="overflow-hidden rounded-lg border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">

@@ -29,7 +29,7 @@ export function StatCard({
     children?: ReactNode;
 }) {
     return (
-        <div className="rounded-xl border bg-card px-4 py-3">
+        <div className="rounded-lg border bg-card px-4 py-3">
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className={cn('mt-0.5 text-lg font-semibold tabular-nums', VALUE_CLASSES[tone])}>{value}</p>
             {children}

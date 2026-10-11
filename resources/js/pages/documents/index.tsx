@@ -177,11 +177,11 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
             </section>
 
             {documents.data.length === 0 ? (
-                <p className="rounded-xl border border-dashed bg-card p-10 text-center text-muted-foreground">
+                <p className="rounded-lg border border-dashed bg-card p-10 text-center text-muted-foreground">
                     {hasFilters ? 'Ningún documento coincide con los filtros.' : 'Todavía no hay documentos.'}
                 </p>
             ) : (
-                <div className="overflow-hidden rounded-xl border bg-card">
+                <div className="overflow-hidden rounded-lg border bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
@@ -308,7 +308,7 @@ function AlertCard({
     const classes = ALERT_CLASSES[tone];
 
     return (
-        <div className={cn('rounded-xl border p-4', classes?.card)}>
+        <div className={cn('rounded-lg border p-4', classes?.card)}>
             <div className="mb-3 flex items-start gap-3">
                 <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-full', classes?.icon)}>
                     <Icon className="size-4" />

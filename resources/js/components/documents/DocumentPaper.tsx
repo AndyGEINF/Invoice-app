@@ -37,13 +37,13 @@ export function DocumentPaper({
 
     return (
         // La franja superior lleva el color de marca, como la cabecera del PDF.
-        <article className={cn('rounded-2xl border border-t-4 bg-card p-4 shadow-sm sm:p-6 md:p-10', className)} style={{ borderTopColor: paper.brandColor }}>
+        <article className={cn('rounded-lg border border-t-4 bg-card p-4 shadow-sm sm:p-6 md:p-10', className)} style={{ borderTopColor: paper.brandColor }}>
             <header className="flex flex-wrap items-start justify-between gap-6">
                 <div className="flex min-w-0 items-start gap-4">
                     {issuer.logo ? (
                         <img src={issuer.logo} alt={`Logotipo de ${issuer.name}`} className="h-14 max-w-40 rounded-lg object-contain" />
                     ) : (
-                        <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-accent text-xl font-semibold text-accent-foreground">
+                        <span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-accent text-xl font-semibold text-accent-foreground">
                             {issuer.name.charAt(0).toUpperCase() || '?'}
                         </span>
                     )}

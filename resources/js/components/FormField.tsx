@@ -37,7 +37,7 @@ export function Field({
 /** Bloque de un formulario largo: título, una línea de contexto y sus campos. */
 export function FormSection({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children: ReactNode }) {
     return (
-        <section className="mb-6 rounded-xl border bg-card p-5 md:p-6">
+        <section className="mb-6 rounded-lg border bg-card p-5 md:p-6">
             <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
                     <h2 className="font-semibold">{title}</h2>

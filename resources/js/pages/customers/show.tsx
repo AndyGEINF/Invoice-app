@@ -281,7 +281,7 @@ function DocumentTable({ rows, showType, showDueDate }: { rows: DocumentRow[]; s
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <section className="rounded-xl border bg-card p-4">
+        <section className="rounded-lg border bg-card p-4">
             <h2 className="mb-3 text-sm font-semibold">{title}</h2>
             {children}
         </section>
