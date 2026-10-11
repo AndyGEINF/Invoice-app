@@ -30,8 +30,11 @@ export function ThemeToggle({ className, showLabel = false }: { className?: stri
             <DropdownMenuTrigger
                 aria-label={`Tema: ${current.label}`}
                 className={cn(
-                    'flex items-center gap-3 rounded-lg text-sidebar-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
-                    showLabel ? 'w-full px-3 py-2.5 text-sm' : 'size-10 justify-center',
+                    'flex items-center gap-3 rounded-lg transition-colors outline-none focus-visible:ring-2',
+                    // Con texto va en el menú del móvil (fondo claro); sin texto, en la barra lateral (marino).
+                    showLabel
+                        ? 'w-full px-3 py-2.5 text-sm text-foreground hover:bg-muted focus-visible:ring-ring'
+                        : 'size-10 justify-center text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-hover-foreground focus-visible:ring-sidebar-ring',
                     className,
                 )}
             >

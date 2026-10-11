@@ -104,8 +104,10 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
                     aria-label={item.label}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                        'flex size-10 items-center justify-center rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        active ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-muted hover:text-foreground',
+                        'flex size-10 items-center justify-center rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+                        active
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                            : 'text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-hover-foreground',
                     )}
                 >
                     <Icon className="size-5" />
