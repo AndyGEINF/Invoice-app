@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { ImageUp, Save, TriangleAlert } from 'lucide-react';
+import { ImageUp, Plus, Save, TriangleAlert } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 import { FieldError } from '@/components/documents/LineEditor';
@@ -246,21 +246,27 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                         </Field>
                     </div>
                 </FormSection>
-
-                <div className="flex justify-end pb-6">
-                    <Button type="submit" disabled={form.processing}>
-                        <Save aria-hidden />
-                        {form.processing ? 'Guardando…' : 'Guardar'}
-                    </Button>
-                </div>
             </form>
         </>
     );
 }
 
-/** Muestras de color más un selector libre. El color tiñe la cabecera, los títulos y el total del PDF. */
+/** Aro del color personalizado: el círculo cromático completo, para que se entienda que ahí cabe cualquier color. */
+const COLOR_WHEEL = 'conic-gradient(#ef4444, #eab308, #22c55e, #06b6d4, #3b82f6, #a855f7, #ec4899, #ef4444)';
+
+/**
+ * Cinco muestras más un color personalizado, el único editable: un aro con el
+ * círculo cromático que abre el selector del sistema. Sin elegir muestra un
+ * "+"; elegido, se rellena con ese color. El color tiñe la cabecera, los
+ * títulos y el total del PDF.
+ */
 function BrandColorField({ value, swatches, error, onChange }: { value: string; swatches: string[]; error?: string; onChange: (color: string) => void }) {
     const isCustom = !swatches.includes(value.toLowerCase());
+    const ringClasses = (selected: boolean) =>
+        cn(
+            'size-8 rounded-full ring-offset-2 ring-offset-card transition-shadow',
+            selected ? 'ring-2 ring-foreground' : 'hover:ring-2 hover:ring-border focus-visible:ring-2 focus-visible:ring-ring has-focus-visible:ring-2 has-focus-visible:ring-ring',
+        );
 
     return (
         <fieldset>
@@ -276,23 +282,20 @@ function BrandColorField({ value, swatches, error, onChange }: { value: string; 
                             onClick={() => onChange(swatch)}
                             aria-label={`Color ${swatch}`}
                             aria-pressed={selected}
-                            className={cn(
-                                'size-8 rounded-full border-2 border-card ring-offset-2 ring-offset-card transition-shadow focus-visible:outline-none',
-                                selected ? 'ring-2 ring-foreground' : 'hover:ring-2 hover:ring-border focus-visible:ring-2 focus-visible:ring-ring',
-                            )}
+                            className={cn(ringClasses(selected), 'focus-visible:outline-none')}
                             style={{ backgroundColor: swatch }}
                         />
                     );
                 })}
                 <label
-                    className={cn(
-                        'relative flex h-8 cursor-pointer items-center gap-2 rounded-full border px-3 text-sm text-muted-foreground transition-colors hover:text-foreground',
-                        isCustom && 'border-foreground text-foreground',
-                    )}
+                    title={isCustom ? `Color personalizado ${value.toLowerCase()}` : 'Color personalizado'}
+                    className={cn(ringClasses(isCustom), 'relative grid cursor-pointer place-items-center')}
+                    style={{ background: COLOR_WHEEL }}
                 >
-                    <span className="size-4 rounded-full border" style={{ backgroundColor: value }} aria-hidden />
-                    {isCustom ? value.toLowerCase() : 'Otro'}
-                    <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="sr-only" aria-label="Elegir otro color" />
+                    <span className="grid size-[22px] place-items-center rounded-full bg-card" style={isCustom ? { backgroundColor: value } : undefined} aria-hidden>
+                        {isCustom ? null : <Plus className="size-3.5 text-foreground" strokeWidth={2.5} />}
+                    </span>
+                    <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="sr-only" aria-label="Color personalizado" />
                 </label>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Se usa en la cabecera, los títulos y el total de tus facturas.</p>

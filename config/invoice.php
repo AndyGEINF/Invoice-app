@@ -88,8 +88,9 @@ return [
         // Logotipo obligatorio para emitir.
         'logo_max_kb' => 2048,
         'logo_mimes' => ['png', 'jpg', 'jpeg', 'svg'],
-        // Muestras del selector de color de marca (también se puede elegir otro).
-        'brand_colors' => ['#2563eb', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0d9488', '#334155'],
+        // Las cinco muestras del selector de color de marca: azul, verde, naranja,
+        // rojo y gris pizarra. Cualquier otro se elige con el color personalizado.
+        'brand_colors' => ['#2563eb', '#16a34a', '#ea580c', '#dc2626', '#334155'],
     ],
 
     // Validación de números de IVA intracomunitarios (siempre en cola, nunca bloquea).
