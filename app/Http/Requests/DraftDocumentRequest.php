@@ -36,9 +36,6 @@ final class DraftDocumentRequest extends FormRequest
     /** Cantidad con signo y hasta 4 decimales (el signo lo decide el tipo de documento). */
     private const string QUANTITY_PATTERN = '/^-?\d{1,8}(\.\d{1,4})?$/';
 
-    /** Precio unitario en euros con hasta 3 decimales (milésimas). */
-    private const string UNIT_PRICE_PATTERN = '/^\d{1,10}(\.\d{1,3})?$/';
-
     private const string PERCENTAGE_RULE = 'decimal:0,2';
 
     private const string DATE_RULE = 'date_format:Y-m-d';
@@ -68,7 +65,7 @@ final class DraftDocumentRequest extends FormRequest
             'lines.*.description' => ['required_without:lines.*.product_id', 'nullable', 'string', 'max:'.self::MAX_DESCRIPTION_LENGTH],
             'lines.*.quantity' => ['required', 'regex:'.self::QUANTITY_PATTERN],
             'lines.*.unit' => ['nullable', 'string', 'max:'.self::MAX_UNIT_LENGTH],
-            'lines.*.unit_price' => ['required_without:lines.*.product_id', 'nullable', 'regex:'.self::UNIT_PRICE_PATTERN],
+            'lines.*.unit_price' => ['required_without:lines.*.product_id', 'nullable', 'regex:'.UnitPriceRule::PATTERN],
             'lines.*.discount_percent' => ['sometimes', self::PERCENTAGE_RULE, 'between:'.Percentage::MIN.','.Percentage::MAX],
             'lines.*.vat_rate' => ['required_without:lines.*.product_id', 'nullable', Rule::in(config('invoice.tax.vat_rates'))],
             'lines.*.surcharge_rate' => ['sometimes', Rule::in(config('invoice.tax.surcharge_rates'))],
@@ -97,6 +94,14 @@ final class DraftDocumentRequest extends FormRequest
             'lines.*.vat_rate' => 'IVA',
             'lines.*.surcharge_rate' => 'recargo de equivalencia',
             'lines.*.exemption_code' => 'causa de exención',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'lines.*.unit_price.regex' => UnitPriceRule::MESSAGE,
         ];
     }
 

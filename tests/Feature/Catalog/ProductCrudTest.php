@@ -13,6 +13,7 @@ use App\Domain\Documents\Enums\ExemptionCode;
 use App\Domain\Documents\Invoice;
 use App\Domain\Documents\Series;
 use App\Http\Queries\CatalogIndexQuery;
+use App\Http\Requests\UnitPriceRule;
 use Illuminate\Support\Facades\DB;
 
 /** @return array<string, mixed> */
@@ -21,7 +22,7 @@ function productForm(array $overrides = []): array
     return [
         'type' => 'service',
         'name' => 'Hora de consultoría',
-        'unit_price' => '33.333',
+        'unit_price' => '33.33',
         'unit' => 'h',
         'vat_rate' => '21',
         ...$overrides,
@@ -33,14 +34,14 @@ describe('alta', function () {
         $this->post('/products', productForm(['unit_price' => $price]))->assertRedirect('/products')->assertSessionHasNoErrors();
 
         $product = Product::query()->sole();
-        expect(DB::table('products')->where('id', $product->id)->value('unit_price'))->toBe(33333)
-            ->and($product->unit_price->toDecimalString())->toBe('33.333')
+        expect(DB::table('products')->where('id', $product->id)->value('unit_price'))->toBe(33330)
+            ->and($product->unit_price->toDecimalString())->toBe('33.330')
             ->and($product->type)->toBe(ProductType::Service);
-    })->with(['con punto' => '33.333', 'con coma' => '33,333']);
+    })->with(['con punto' => '33.33', 'con coma' => '33,33', 'con ceros detrás' => '33.330']);
 
-    it('rechaza precios negativos o con más de tres decimales', function (string $price) {
-        $this->post('/products', productForm(['unit_price' => $price]))->assertSessionHasErrors('unit_price');
-    })->with(['-5', '1.2345', 'diez']);
+    it('rechaza precios negativos o con más de dos decimales', function (string $price) {
+        $this->post('/products', productForm(['unit_price' => $price]))->assertSessionHasErrors(['unit_price' => UnitPriceRule::MESSAGE]);
+    })->with(['-5', '33.333', '33,333', '1.2345', 'diez']);
 
     it('solo admite los tipos de IVA configurados', function () {
         $this->post('/products', productForm(['vat_rate' => '15']))->assertSessionHasErrors('vat_rate');

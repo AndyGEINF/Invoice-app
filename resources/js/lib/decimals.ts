@@ -14,6 +14,17 @@ export function decimalForInput(value: string): string {
     return value.replace(/\.?0+$/, '').replace('.', ',');
 }
 
+/** Precios unitarios: dos decimales como mucho (lo mismo que valida `App\Http\Requests\UnitPriceRule`). */
+export const PRICE_DECIMALS = 2;
+
+/**
+ * Si lo escrito cabe en esos decimales ("33", "33,3", "33,33"; también a medio
+ * escribir: "", "33,"). Los campos ignoran la tecla que lo haría pasar.
+ */
+export function fitsDecimals(value: string, decimals: number): boolean {
+    return new RegExp(`^\\d*([.,]\\d{0,${decimals}})?$`).test(value.trim());
+}
+
 /** "33,333" → "33.333" */
 export function decimalForServer(value: string): string {
     return value.trim().replace(',', '.');

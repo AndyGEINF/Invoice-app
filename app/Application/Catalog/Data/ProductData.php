@@ -13,8 +13,8 @@ use App\Domain\Shared\UnitPrice;
 /**
  * Datos de alta o edición de un producto o servicio, ya validados.
  *
- * El precio llega como texto decimal de hasta tres decimales ("33.333") y se
- * guarda en milésimas sin pasar nunca por un float.
+ * El precio llega como texto decimal ("33.33"; el formulario admite dos
+ * decimales como mucho) y se guarda en milésimas sin pasar nunca por un float.
  */
 final readonly class ProductData
 {

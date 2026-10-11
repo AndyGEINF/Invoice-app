@@ -14,6 +14,7 @@ use App\Domain\Issuer\Issuer;
 use App\Domain\Shared\Address;
 use App\Domain\Shared\Contracts\Clock;
 use App\Domain\Shared\UnitPrice;
+use App\Http\Requests\UnitPriceRule;
 use App\Infrastructure\Time\FrozenClock;
 
 beforeEach(function () {
@@ -59,15 +60,18 @@ describe('alta', function () {
 });
 
 describe('edición y recálculo', function () {
-    it('PUT recalcula desglose y totales (vector V2 del contrato)', function () {
+    // El vector V2 del contrato usa precios de tres decimales: el formulario ya no
+    // los admite y ese vector se prueba en tests/Unit/Tax. Aquí, la misma idea
+    // (redondeo por grupo de IVA, no por línea) con precios de dos decimales.
+    it('PUT recalcula desglose y totales redondeando por grupo de IVA', function () {
         $this->post('/invoices', ['customer_id' => $this->customer->id, 'lines' => [draftLine(1, 'Inicial', '1', '1')]]);
         $invoice = latestInvoice();
 
         $this->put("/invoices/{$invoice->id}", [
             'customer_id' => $this->customer->id,
             'lines' => [
-                draftLine(1, 'A', '3', '33.333'),
-                draftLine(2, 'B', '1', '50.005'),
+                draftLine(1, 'A', '3', '33.33'),
+                draftLine(2, 'B', '1', '50.00'),
                 draftLine(3, 'C', '1', '10.000', '10'),
             ],
         ])->assertRedirect("/invoices/{$invoice->id}")->assertSessionHasNoErrors();
@@ -77,11 +81,17 @@ describe('edición y recálculo', function () {
             ->mapWithKeys(fn (DocumentTax $tax) => [(string) $tax->rate => [$tax->base->cents, $tax->amount->cents]])
             ->all();
 
-        expect($invoice->taxable_base->cents)->toBe(16000)
+        // 21 %: 99,99 + 50,00 = 149,99 → IVA 31,4979 → 31,50. 10 %: 10,00 → 1,00.
+        expect($invoice->taxable_base->cents)->toBe(15999)
             ->and($invoice->vat_total->cents)->toBe(3250)
-            ->and($invoice->total->cents)->toBe(19250)
-            ->and($groups)->toEqual(['21.00' => [15000, 3150], '10.00' => [1000, 100]])
-            ->and($invoice->lines()->get()->map(fn (DocumentLine $line) => $line->line_base->cents)->all())->toBe([10000, 5001, 1000]);
+            ->and($invoice->total->cents)->toBe(19249)
+            ->and($groups)->toEqual(['21.00' => [14999, 3150], '10.00' => [1000, 100]])
+            ->and($invoice->lines()->get()->map(fn (DocumentLine $line) => $line->line_base->cents)->all())->toBe([9999, 5000, 1000]);
+    });
+
+    it('no admite precios con más de dos decimales en las líneas', function () {
+        $this->post('/invoices', ['customer_id' => $this->customer->id, 'lines' => [draftLine(1, 'A', '3', '33.333')]])
+            ->assertSessionHasErrors(['lines.0.unit_price' => UnitPriceRule::MESSAGE]);
     });
 
     it('reordena líneas conservando su identidad', function () {

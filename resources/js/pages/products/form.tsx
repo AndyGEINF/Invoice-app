@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { decimalForInput, decimalForServer } from '@/lib/decimals';
+import { decimalForInput, decimalForServer, fitsDecimals, PRICE_DECIMALS } from '@/lib/decimals';
 import { cn } from '@/lib/utils';
 import type { Option, ProductRow } from '@/types/catalog';
 
@@ -131,7 +131,11 @@ export default function ProductFormPage({ product, options }: Props) {
                                 id="unit_price"
                                 inputMode="decimal"
                                 value={form.data.unit_price}
-                                onChange={(event) => form.setData('unit_price', event.target.value)}
+                                onChange={(event) => {
+                                    if (fitsDecimals(event.target.value, PRICE_DECIMALS)) {
+                                        form.setData('unit_price', event.target.value);
+                                    }
+                                }}
                                 placeholder="0,00"
                             />
                         </Field>

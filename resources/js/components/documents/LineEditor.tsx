@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { decimalForInput } from '@/lib/decimals';
+import { decimalForInput, fitsDecimals, PRICE_DECIMALS } from '@/lib/decimals';
 import { formatPercentage } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import type { ProductRow } from '@/types/catalog';
@@ -187,8 +187,12 @@ export function LineEditor({
                                     <Input
                                         inputMode="decimal"
                                         value={line.unit_price}
-                                        onChange={(event) => update(index, { unit_price: event.target.value })}
-                                        placeholder="0,000"
+                                        onChange={(event) => {
+                                            if (fitsDecimals(event.target.value, PRICE_DECIMALS)) {
+                                                update(index, { unit_price: event.target.value });
+                                            }
+                                        }}
+                                        placeholder="0,00"
                                         aria-invalid={Boolean(error(index, 'unit_price'))}
                                         className="text-right tabular-nums"
                                     />

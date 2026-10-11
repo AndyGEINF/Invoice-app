@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Valida el formulario de producto o servicio. El precio llega como texto con
- * hasta tres decimales; la referencia (SKU) es única si se indica.
+ * hasta dos decimales; la referencia (SKU) es única si se indica.
  */
 final class ProductRequest extends FormRequest
 {
@@ -27,9 +27,6 @@ final class ProductRequest extends FormRequest
     public const int MAX_DESCRIPTION_LENGTH = 2000;
 
     public const int MAX_UNIT_LENGTH = 20;
-
-    /** Precio unitario en euros con hasta 3 decimales (milésimas). */
-    private const string UNIT_PRICE_PATTERN = '/^\d{1,10}(\.\d{1,3})?$/';
 
     /** @return array<string, mixed> */
     public function rules(): array
@@ -46,7 +43,7 @@ final class ProductRequest extends FormRequest
             'type' => ['required', Rule::enum(ProductType::class)],
             'name' => ['required', 'string', 'max:'.self::MAX_NAME_LENGTH],
             'description' => ['nullable', 'string', 'max:'.self::MAX_DESCRIPTION_LENGTH],
-            'unit_price' => ['required', 'regex:'.self::UNIT_PRICE_PATTERN],
+            'unit_price' => ['required', 'regex:'.UnitPriceRule::PATTERN],
             'unit' => ['nullable', 'string', 'max:'.self::MAX_UNIT_LENGTH],
             'vat_rate' => ['required', Rule::in(config('invoice.tax.vat_rates'))],
             'exemption_code' => ['nullable', Rule::enum(ExemptionCode::class)],
@@ -74,7 +71,7 @@ final class ProductRequest extends FormRequest
     {
         return [
             'sku.unique' => 'Ya hay otro producto con esta referencia.',
-            'unit_price.regex' => 'El precio debe ser un importe positivo con hasta tres decimales.',
+            'unit_price.regex' => UnitPriceRule::MESSAGE,
         ];
     }
 
