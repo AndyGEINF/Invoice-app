@@ -58,7 +58,9 @@ export function DocumentPaper({
 
                 {/* ml-auto: si no cabe al lado del emisor y baja de línea, sigue pegado a la derecha. */}
                 <div className="ml-auto text-right">
-                    <p className="text-xl font-semibold tracking-tight">{title ?? paper.title}</p>
+                    <p className="text-xl font-semibold tracking-tight" style={{ color: paper.brandColor }}>
+                        {title ?? paper.title}
+                    </p>
                     <div className="mt-1 flex justify-end">{status ?? (paper.number ? <p className="font-semibold">{paper.number}</p> : null)}</div>
                     <div className="mt-2 text-sm">
                         {dates ??
@@ -80,7 +82,9 @@ export function DocumentPaper({
                 </div>
                 <div className="text-right">
                     <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Total</p>
-                    <p className="text-3xl font-semibold tracking-tight tabular-nums">{total ?? paper.total}</p>
+                    <p className="text-3xl font-semibold tracking-tight tabular-nums" style={{ color: paper.brandColor }}>
+                        {total ?? paper.total}
+                    </p>
                 </div>
             </section>
 
@@ -224,7 +228,9 @@ function PaperTotals({ paper }: { paper: PaperView }) {
             ))}
             <div className="mt-2 flex justify-between gap-4 border-t pt-3 text-base font-semibold">
                 <dt>Total</dt>
-                <dd className="tabular-nums">{paper.total}</dd>
+                <dd className="tabular-nums" style={{ color: paper.brandColor }}>
+                    {paper.total}
+                </dd>
             </div>
         </dl>
     );

@@ -298,7 +298,9 @@ function BrandColorField({ value, swatches, error, onChange }: { value: string; 
                     <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="sr-only" aria-label="Color personalizado" />
                 </label>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Se usa en la cabecera, los títulos y el total de tus facturas.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+                Se usa en la cabecera, los títulos y el total de tus facturas. Las ya emitidas conservan el color con el que se emitieron.
+            </p>
             <FieldError message={error} />
         </fieldset>
     );
