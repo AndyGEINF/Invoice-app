@@ -98,8 +98,9 @@ export function MonthlyBillingChart({ months }: { months: MonthlyBilling[] }) {
             ) : (
                 // pt-3: la etiqueta del techo del eje sobresale media línea por arriba.
                 <div className="flex gap-3 pt-3">
-                    {/* Eje: solo dos referencias redondas; el detalle está en cada columna y en la tabla. */}
-                    <div className="relative w-12 shrink-0 text-right text-xs text-muted-foreground tabular-nums" style={{ height: PLOT_HEIGHT_PX }}>
+                    {/* Eje: solo dos referencias redondas; el detalle está en cada columna y en la tabla.
+                        En una sola línea ("400 mil €"): partida en dos se montaba sobre el título. */}
+                    <div className="relative w-16 shrink-0 text-right text-xs whitespace-nowrap text-muted-foreground tabular-nums" style={{ height: PLOT_HEIGHT_PX }}>
                         {GRID_STEPS.map((step) => (
                             <span key={step} className="absolute right-0 -translate-y-1/2" style={{ bottom: `${step * 100}%` }}>
                                 {compactEuros.format(ceilingEuros * step)} €
