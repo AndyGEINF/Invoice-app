@@ -1,9 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
 import { ImageUp, Plus, Save, TriangleAlert } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { FieldError } from '@/components/documents/LineEditor';
 import { Field, FormSection } from '@/components/FormField';
+import { LogoCropDialog } from '@/components/LogoCropDialog';
 import { PageHeader } from '@/components/PageHeader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,28 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
         [chosenLogoUrl],
     );
 
+    // Imagen elegida y aún sin recortar: abre la ventana de recorte.
+    const [cropSource, setCropSource] = useState<string | null>(null);
+
+    function chooseLogo(file: File | null) {
+        if (file) {
+            setCropSource(URL.createObjectURL(file));
+        }
+    }
+
+    function closeCrop() {
+        if (cropSource) {
+            URL.revokeObjectURL(cropSource);
+        }
+
+        setCropSource(null);
+    }
+
+    function applyCroppedLogo(file: File) {
+        form.setData('logo', file);
+        closeCrop();
+    }
+
     function submit(event: React.FormEvent) {
         event.preventDefault();
         // El logotipo obliga a enviar multipart: POST con _method=PUT.
@@ -147,7 +170,7 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                                 className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed bg-muted/40 p-4 text-center text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                             >
                                 {preview ? (
-                                    <img src={preview} alt="Vista previa del logotipo" className="max-h-full max-w-full object-contain" />
+                                    <img src={preview} alt="Vista previa del logotipo" className="size-40 max-h-full rounded-full border bg-card object-contain" />
                                 ) : (
                                     <>
                                         <ImageUp className="size-6" aria-hidden />
@@ -160,8 +183,13 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                                 type="file"
                                 accept="image/png,image/jpeg,image/svg+xml"
                                 className="sr-only"
-                                onChange={(event) => form.setData('logo', event.target.files?.[0] ?? null)}
+                                onChange={(event) => {
+                                    chooseLogo(event.target.files?.[0] ?? null);
+                                    // Vaciarlo deja volver a elegir el mismo archivo (si no, el navegador no avisa del cambio).
+                                    event.target.value = '';
+                                }}
                             />
+                            <LogoCropDialog source={cropSource} onCancel={closeCrop} onConfirm={applyCroppedLogo} />
                             <p className="mt-1 text-xs text-muted-foreground">
                                 PNG, JPG o SVG, hasta {options.logo_max_kb / KB_PER_MB} MB. {preview ? 'Pulsa la imagen para cambiarla.' : ''}
                             </p>

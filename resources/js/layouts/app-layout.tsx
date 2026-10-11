@@ -84,7 +84,8 @@ function IssuerAvatar({ className }: { className?: string }) {
             aria-label={`Datos de ${name}`}
             className={cn('relative flex size-9 items-center justify-center overflow-hidden rounded-full border bg-card text-sm font-semibold text-primary', className)}
         >
-            {issuer.logoUrl ? <img src={issuer.logoUrl} alt="" className="size-full object-contain p-1" /> : name.charAt(0).toUpperCase()}
+            {/* Sin margen: el logotipo ya viene recortado en círculo y llena el avatar. */}
+            {issuer.logoUrl ? <img src={issuer.logoUrl} alt="" className="size-full rounded-full bg-white object-contain" /> : name.charAt(0).toUpperCase()}
             <span
                 aria-hidden
                 className={cn('absolute right-0 bottom-0 size-2.5 rounded-full border-2 border-card', issuer.isComplete ? 'bg-success' : 'bg-warning')}

@@ -82,7 +82,7 @@
  *   fuertes, en marino tinta.
  * - Beige para lo seleccionado (--accent): opción de menú, pestaña, elemento activo.
  * - Verde, ámbar y rojo solo para estados (cobrada, pendiente, vencida).
- * En oscuro se invierte: fondo marino noche, tarjetas marino tinta y botones beige.
+ * En oscuro: grises apagados con un toque de marino, y botones beige.
  */
 :root {
     --navy-night: #010736;
@@ -143,24 +143,29 @@
     --sidebar-ring: var(--beige);
 }
 
+/*
+ * Oscuro apagado, como las apps de escritorio: grises casi neutros con un toque
+ * de marino (croma ≤ 0.03), nunca el marino saturado de fondo. El beige queda
+ * para el botón principal y lo seleccionado.
+ */
 .dark {
-    --background: var(--navy-night);
-    --foreground: oklch(0.96 0.01 90);
-    --card: var(--navy-ink);
-    --card-foreground: oklch(0.96 0.01 90);
-    --popover: var(--navy-ink);
-    --popover-foreground: oklch(0.96 0.01 90);
+    --background: oklch(0.165 0.012 265);
+    --foreground: oklch(0.94 0.008 90);
+    --card: oklch(0.205 0.014 265);
+    --card-foreground: oklch(0.94 0.008 90);
+    --popover: oklch(0.225 0.015 265);
+    --popover-foreground: oklch(0.94 0.008 90);
     --primary: var(--beige);
-    --primary-foreground: var(--navy-night);
-    --secondary: oklch(0.3 0.06 265);
-    --secondary-foreground: oklch(0.93 0.01 90);
-    --muted: oklch(0.3 0.06 265);
-    --muted-foreground: oklch(0.75 0.03 265);
-    --accent: var(--navy);
+    --primary-foreground: var(--navy-ink);
+    --secondary: oklch(0.26 0.016 265);
+    --secondary-foreground: oklch(0.92 0.008 90);
+    --muted: oklch(0.26 0.016 265);
+    --muted-foreground: oklch(0.72 0.015 265);
+    --accent: oklch(0.29 0.03 265);
     --accent-foreground: var(--beige);
     --destructive: oklch(0.7 0.19 22);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
+    --border: oklch(1 0 0 / 8%);
+    --input: oklch(1 0 0 / 13%);
     --ring: var(--beige);
 
     --success: oklch(0.74 0.17 150);
@@ -172,19 +177,19 @@
     --danger: oklch(0.7 0.19 22);
     --danger-soft: oklch(0.31 0.08 22);
     --danger-strong: oklch(0.85 0.1 20);
-    --info: oklch(0.75 0.08 265);
-    --info-soft: var(--navy);
-    --info-strong: oklch(0.88 0.04 265);
+    --info: oklch(0.75 0.06 265);
+    --info-soft: oklch(0.29 0.03 265);
+    --info-strong: oklch(0.88 0.03 265);
 
-    --chart-1: oklch(0.75 0.08 265);
+    --chart-1: oklch(0.75 0.06 265);
     --chart-2: oklch(0.74 0.17 150);
     --chart-3: oklch(0.8 0.15 75);
     --chart-4: oklch(0.7 0.19 22);
     --chart-5: oklch(0.6 0.02 260);
-    --bar-past: var(--navy);
+    --bar-past: oklch(0.36 0.025 265);
     --bar-current: var(--beige);
-    --sidebar: var(--navy-night);
-    --sidebar-foreground: oklch(0.75 0.03 265);
+    --sidebar: oklch(0.145 0.012 265);
+    --sidebar-foreground: oklch(0.72 0.015 265);
     --sidebar-hover: oklch(1 0 0 / 10%);
     --sidebar-hover-foreground: oklch(1 0 0);
     --sidebar-primary: var(--navy);

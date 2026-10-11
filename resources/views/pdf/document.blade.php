@@ -60,7 +60,8 @@
             border-bottom: 0.8mm solid var(--brand);
         }
         .issuer { max-width: 55%; }
-        .logo { display: block; max-height: 22mm; max-width: 60mm; margin-bottom: 3mm; }
+        /* El logotipo se recorta en círculo al subirlo: se imprime igual que en la aplicación. */
+        .logo { display: block; width: 22mm; height: 22mm; border-radius: 50%; object-fit: contain; background: #fff; margin-bottom: 3mm; }
         .issuer-name { font-size: 12pt; font-weight: 700; }
         .muted { color: #59636e; }
 
