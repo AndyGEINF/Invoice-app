@@ -9,12 +9,15 @@ use App\Http\Controllers\Customers\CustomerSearchController;
 use App\Http\Controllers\Customers\CustomerShowController;
 use App\Http\Controllers\Customers\ValidateVatController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Documents\ConvertQuoteController;
 use App\Http\Controllers\Documents\DocumentFormController;
 use App\Http\Controllers\Documents\DocumentIndexController;
 use App\Http\Controllers\Documents\DocumentPreviewController;
 use App\Http\Controllers\Documents\DocumentShowController;
+use App\Http\Controllers\Documents\DuplicateDocumentController;
 use App\Http\Controllers\Documents\InternalNotesController;
 use App\Http\Controllers\Documents\IssueInvoiceController;
+use App\Http\Controllers\Documents\QuoteTransitionController;
 use App\Http\Controllers\Issuer\IssuerSettingsController;
 use App\Http\Controllers\Products\ProductArchiveController;
 use App\Http\Controllers\Products\ProductFormController;
@@ -67,34 +70,43 @@ Route::prefix('/products')->name('products.')->group(function (): void {
 });
 
 /*
-| Documentos: un único recurso con el tipo en la URL (/invoices, /credit-notes).
-| `{type}` llega al controlador como DocumentType y `{document}` solo encuentra
-| documentos de ese tipo (bindings en AppServiceProvider).
+| Documentos: un único recurso con el tipo en la URL (/quotes, /invoices,
+| /credit-notes). `{type}` llega al controlador como DocumentType y `{document}`
+| solo encuentra documentos de ese tipo (bindings en AppServiceProvider).
 */
 
-$fiscalTypes = [
-    DocumentType::Invoice->routeSegment(),
-    DocumentType::CreditNote->routeSegment(),
-];
+$allTypes = array_map(static fn (DocumentType $type): string => $type->routeSegment(), DocumentType::cases());
+$quotes = [DocumentType::Quote->routeSegment()];
+$fiscalTypes = [DocumentType::Invoice->routeSegment(), DocumentType::CreditNote->routeSegment()];
 
-// Las rectificativas no se crean desde cero: nacen de la factura que corrigen.
-$creatableTypes = [DocumentType::Invoice->routeSegment()];
+// Las rectificativas no se crean desde cero ni se duplican: nacen de la factura que corrigen.
+$creatableTypes = [DocumentType::Quote->routeSegment(), DocumentType::Invoice->routeSegment()];
 
-Route::name('documents.')->group(function () use ($fiscalTypes, $creatableTypes): void {
-    Route::get('/{type}', DocumentIndexController::class)->whereIn('type', $fiscalTypes)->name('index');
+Route::name('documents.')->group(function () use ($allTypes, $quotes, $fiscalTypes, $creatableTypes): void {
+    Route::get('/{type}', DocumentIndexController::class)->whereIn('type', $allTypes)->name('index');
     Route::get('/{type}/create', [DocumentFormController::class, 'create'])->whereIn('type', $creatableTypes)->name('create');
     Route::post('/{type}', [DocumentFormController::class, 'store'])->whereIn('type', $creatableTypes)->name('store');
 
     Route::prefix('/{type}/{document}')
-        ->whereIn('type', $fiscalTypes)
         ->whereUuid('document')
-        ->group(function (): void {
-            Route::get('/', DocumentShowController::class)->name('show');
-            Route::get('/edit', [DocumentFormController::class, 'edit'])->name('edit');
-            Route::get('/preview', DocumentPreviewController::class)->name('preview');
-            Route::put('/', [DocumentFormController::class, 'update'])->name('update');
-            Route::delete('/', [DocumentFormController::class, 'destroy'])->name('destroy');
-            Route::post('/issue', IssueInvoiceController::class)->name('issue');
-            Route::patch('/internal-notes', InternalNotesController::class)->name('internal-notes');
+        ->group(function () use ($allTypes, $quotes, $fiscalTypes, $creatableTypes): void {
+            Route::whereIn('type', $allTypes)->group(function (): void {
+                Route::get('/', DocumentShowController::class)->name('show');
+                Route::get('/edit', [DocumentFormController::class, 'edit'])->name('edit');
+                Route::get('/preview', DocumentPreviewController::class)->name('preview');
+                Route::put('/', [DocumentFormController::class, 'update'])->name('update');
+                Route::delete('/', [DocumentFormController::class, 'destroy'])->name('destroy');
+                Route::patch('/internal-notes', InternalNotesController::class)->name('internal-notes');
+            });
+
+            Route::post('/issue', IssueInvoiceController::class)->whereIn('type', $fiscalTypes)->name('issue');
+            Route::post('/duplicate', DuplicateDocumentController::class)->whereIn('type', $creatableTypes)->name('duplicate');
+
+            // Ciclo del presupuesto: enviar, aceptar, rechazar y convertir en factura.
+            Route::post('/convert', ConvertQuoteController::class)->whereIn('type', $quotes)->name('convert');
+            Route::post('/{transition}', QuoteTransitionController::class)
+                ->whereIn('type', $quotes)
+                ->whereIn('transition', array_keys(QuoteTransitionController::TRANSITIONS))
+                ->name('transition');
         });
 });

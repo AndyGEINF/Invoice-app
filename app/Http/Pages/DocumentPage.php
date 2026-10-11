@@ -9,8 +9,11 @@ use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentEvent;
 use App\Domain\Documents\DocumentSend;
 use App\Domain\Documents\Enums\DocumentType;
+use App\Domain\Documents\Enums\QuoteStatus;
+use App\Domain\Documents\Quote;
 use App\Domain\Documents\Series;
 use App\Domain\Issuer\Issuer;
+use App\Domain\Shared\Contracts\Clock;
 use App\Http\Presenters\PrintableDocument;
 use App\Http\Resources\CustomerOption;
 use App\Http\Resources\DocumentDetail;
@@ -187,7 +190,7 @@ final class DocumentPage
 
     /**
      * Acciones que el documento admite ahora. Las que dependen de historias
-     * posteriores (envío, rectificación, conversión, cobro) se activan al
+     * posteriores (envío por email, rectificación, cobro) se activan al
      * implementarlas; hasta entonces se ofrecen como no disponibles.
      *
      * @return array<string, bool>
@@ -196,14 +199,20 @@ final class DocumentPage
     {
         $editable = $document === null || $document->isEditable();
         $saved = $document !== null;
+        $quote = $document instanceof Quote ? $document : null;
+        $quoteStatus = $quote?->status;
 
         return [
             'edit' => $editable,
-            'issue' => $saved && $editable && $type !== DocumentType::Quote,
+            'issue' => $saved && $editable && $type->isFiscal(),
             'delete' => $saved && $editable,
             'send' => false,
             'rectify' => false,
-            'convert' => false,
+            'convert' => $quoteStatus === QuoteStatus::Accepted,
+            'quote_send' => $quoteStatus === QuoteStatus::Draft,
+            'quote_accept' => $quoteStatus === QuoteStatus::Sent && ! $quote->isExpired(app(Clock::class)->today()),
+            'quote_reject' => $quoteStatus === QuoteStatus::Sent,
+            'duplicate' => $saved && $type !== DocumentType::CreditNote,
             'mark_paid' => false,
             'unmark_paid' => false,
         ];

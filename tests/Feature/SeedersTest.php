@@ -82,4 +82,12 @@ describe('DemoSeeder', function () {
     it('crea tres presupuestos', function () {
         expect(Quote::query()->count())->toBe(3);
     });
+
+    it('los presupuestos enviados y aceptados tienen número de la serie P; el borrador no', function () {
+        $numbers = Quote::query()->orderBy('created_at')->get()->mapWithKeys(fn (Quote $quote): array => [$quote->status->value => $quote->full_number]);
+
+        expect($numbers->get('draft'))->toBeNull()
+            ->and($numbers->get('sent'))->toStartWith('P')
+            ->and($numbers->get('accepted'))->toStartWith('P');
+    });
 });

@@ -6,7 +6,10 @@ namespace App\Http\Queries;
 
 use App\Domain\Documents\Document;
 use App\Domain\Documents\Enums\DocumentStatus;
+use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Enums\PaymentStatus;
+use App\Domain\Documents\Enums\QuoteStatus;
+use App\Domain\Documents\Quote;
 use App\Domain\Shared\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,7 +37,7 @@ final readonly class DocumentIndexQuery
 
     public function __construct(
         public ?string $search = null,
-        public ?DocumentStatus $status = null,
+        public DocumentStatus|QuoteStatus|null $status = null,
         public ?PaymentStatus $paymentStatus = null,
         public ?string $customerId = null,
         public ?CarbonImmutable $from = null,
@@ -42,14 +45,16 @@ final readonly class DocumentIndexQuery
         public ?string $seriesId = null,
     ) {}
 
-    public static function fromRequest(Request $request): self
+    /** Los presupuestos tienen sus propios estados y no se cobran: sin filtro de cobro. */
+    public static function fromRequest(Request $request, DocumentType $type = DocumentType::Invoice): self
     {
         $search = trim((string) $request->query('q', ''));
+        $status = (string) $request->query('status', '');
 
         return new self(
             search: $search === '' ? null : mb_substr($search, 0, self::MAX_SEARCH_LENGTH),
-            status: DocumentStatus::tryFrom((string) $request->query('status', '')),
-            paymentStatus: PaymentStatus::tryFrom((string) $request->query('payment_status', '')),
+            status: $type->isFiscal() ? DocumentStatus::tryFrom($status) : QuoteStatus::tryFrom($status),
+            paymentStatus: $type->isFiscal() ? PaymentStatus::tryFrom((string) $request->query('payment_status', '')) : null,
             customerId: self::uuidOrNull($request->query('customer_id')),
             from: self::dateOrNull($request->query('from')),
             to: self::dateOrNull($request->query('to')),
@@ -108,20 +113,33 @@ final readonly class DocumentIndexQuery
     }
 
     /**
-     * Totales de todo lo filtrado (no solo de la página): número de documentos,
-     * suma de los emitidos, lo pendiente de cobro aún en plazo y lo vencido.
-     * Pendiente y vencido no se solapan: juntos son todo lo no cobrado.
+     * Totales de todo lo filtrado (no solo de la página). Las claves son las
+     * mismas para todos los tipos y cambia lo que significan:
+     *
+     * - Facturas: suma de las emitidas, lo pendiente de cobro aún en plazo y lo
+     *   vencido (pendiente y vencido no se solapan).
+     * - Presupuestos: suma de los enviados, lo aceptado aún sin facturar y lo
+     *   caducado.
      *
      * @param  Builder<covariant Document>  $filtered
      * @return array<string, int|string>
      */
-    public static function totals(Builder $filtered, CarbonImmutable $today): array
+    public static function totals(Builder $filtered, CarbonImmutable $today, DocumentType $type = DocumentType::Invoice): array
     {
         $issued = (clone $filtered)->where('status', '<>', DocumentStatus::Draft->value);
 
+        if ($type->isFiscal()) {
+            $pending = (clone $filtered)->unpaid($today);
+            $overdue = (clone $filtered)->overdue($today);
+        } else {
+            /** @var Builder<Quote> $filtered */
+            $pending = (clone $filtered)->where('status', QuoteStatus::Accepted->value);
+            $overdue = (clone $filtered)->expired($today);
+        }
+
         $sumTotal = Money::fromCents((int) (clone $issued)->sum('total'));
-        $sumPending = Money::fromCents((int) (clone $filtered)->unpaid($today)->sum('total'));
-        $sumOverdue = Money::fromCents((int) (clone $filtered)->overdue($today)->sum('total'));
+        $sumPending = Money::fromCents((int) $pending->sum('total'));
+        $sumOverdue = Money::fromCents((int) $overdue->sum('total'));
 
         return [
             'count' => (clone $filtered)->count(),

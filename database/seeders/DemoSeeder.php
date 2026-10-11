@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Application\Documents\TransitionQuote;
 use App\Domain\Catalog\Product;
 use App\Domain\Customers\Customer;
 use App\Domain\Documents\Enums\DocumentStatus;
@@ -161,7 +162,18 @@ final class DemoSeeder extends Seeder
             ]);
 
             $totals = $this->addSingleLine($quote, $products[$i], (string) (($i + 1) * 2));
-            $quote->update([...$totals, 'status' => $statuses[$i]]);
+            $quote->update($totals);
+
+            // Por el caso de uso, como en la aplicación: al enviarse recibe número.
+            $transition = app(TransitionQuote::class);
+
+            if ($statuses[$i] !== QuoteStatus::Draft) {
+                $quote = $transition($quote, QuoteStatus::Sent);
+            }
+
+            if ($statuses[$i] === QuoteStatus::Accepted) {
+                $transition($quote, QuoteStatus::Accepted);
+            }
         }
     }
 

@@ -8,6 +8,7 @@ use App\Domain\Documents\Document;
 use App\Domain\Documents\Enums\DocumentStatus;
 use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Enums\PaymentStatus;
+use App\Domain\Documents\Enums\QuoteStatus;
 use App\Domain\Shared\Contracts\Clock;
 use App\Domain\Shared\Money;
 use App\Http\Controllers\Controller;
@@ -34,7 +35,7 @@ final class DocumentIndexController extends Controller
     public function __invoke(Request $request, DocumentType $type, Clock $clock): Response
     {
         $today = $clock->today();
-        $filters = DocumentIndexQuery::fromRequest($request);
+        $filters = DocumentIndexQuery::fromRequest($request, $type);
         $filtered = $filters->apply(Document::classFor($type)::query(), $today);
 
         $documents = (clone $filtered)
@@ -51,20 +52,21 @@ final class DocumentIndexController extends Controller
             'type' => self::typeProps($type),
             'documents' => $documents,
             'filters' => $filters->toArray(),
-            'totals' => DocumentIndexQuery::totals($filtered, $today),
+            'totals' => DocumentIndexQuery::totals($filtered, $today, $type),
             'alerts' => self::alerts($type, $today, $request),
             'series' => self::seriesOptions($type),
             // Opciones de los filtros con las etiquetas de los enums: una sola fuente.
             'options' => [
-                'statuses' => self::options(DocumentStatus::cases()),
-                'payment_statuses' => self::options(PaymentStatus::cases()),
+                'statuses' => self::options($type->isFiscal() ? DocumentStatus::cases() : QuoteStatus::cases()),
+                'payment_statuses' => $type->isFiscal() ? self::options(PaymentStatus::cases()) : [],
             ],
         ]);
     }
 
     /**
      * Avisos sobre todos los documentos del tipo, sin filtros: lo que pide
-     * atención aunque no se esté buscando.
+     * atención aunque no se esté buscando. En presupuestos, `overdue` son los
+     * caducados.
      *
      * @return array<string, array<string, mixed>>
      */
@@ -74,7 +76,9 @@ final class DocumentIndexController extends Controller
 
         return [
             'overdue' => self::alertGroup(
-                (clone $query)->overdue($today)->orderBy('due_date'),
+                $type->isFiscal()
+                    ? (clone $query)->overdue($today)->orderBy('due_date')
+                    : (clone $query)->expired($today)->orderBy('valid_until'),
                 $request,
             ),
             'drafts' => self::alertGroup(
@@ -105,12 +109,12 @@ final class DocumentIndexController extends Controller
     }
 
     /**
-     * @param  list<DocumentStatus|PaymentStatus>  $cases
+     * @param  list<DocumentStatus|QuoteStatus|PaymentStatus>  $cases
      * @return list<array{value: string, label: string}>
      */
     private static function options(array $cases): array
     {
-        return array_map(static fn (DocumentStatus|PaymentStatus $case): array => [
+        return array_map(static fn (DocumentStatus|QuoteStatus|PaymentStatus $case): array => [
             'value' => $case->value,
             'label' => $case->label(),
         ], $cases);
