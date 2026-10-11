@@ -96,7 +96,7 @@ final class DemoSeeder extends Seeder
     {
         return [
             Product::factory()->service()->priced('40')->create(['name' => 'Hora de reparación', 'sku' => 'SRV-0001']),
-            Product::factory()->service()->priced('33.333')->create(['name' => 'Hora de consultoría', 'sku' => 'SRV-0002']),
+            Product::factory()->service()->priced('35')->create(['name' => 'Hora de consultoría', 'sku' => 'SRV-0002']),
             Product::factory()->priced('12.50')->vat('10.00')->create(['name' => 'Menú del día', 'sku' => 'PRD-0001']),
             ...Product::factory()->count(self::PRODUCTS * $this->scale - 3)->create()->all(),
         ];

@@ -17,8 +17,15 @@ final class ProductFactory extends Factory
 {
     protected $model = Product::class;
 
-    /** Precio máximo aleatorio, en milésimas (1.000,000 €). */
-    private const int MAX_PRICE_THOUSANDTHS = 1_000_000;
+    /** Precio máximo aleatorio, en céntimos (1.000,00 €). */
+    private const int MAX_PRICE_CENTS = 100_000;
+
+    /**
+     * El precio se guarda en milésimas, pero los aleatorios van en céntimos
+     * exactos (938,29 €, no 938,293 €), como casi todos los precios reales. Las
+     * milésimas se prueban a propósito con `priced('33.333')`.
+     */
+    private const int THOUSANDTHS_PER_CENT = 10;
 
     public function definition(): array
     {
@@ -26,7 +33,7 @@ final class ProductFactory extends Factory
             'sku' => strtoupper($this->faker->unique()->bothify('???-####')),
             'type' => ProductType::Product,
             'name' => ucfirst($this->faker->words(3, true)),
-            'unit_price' => UnitPrice::fromThousandths($this->faker->numberBetween(1, self::MAX_PRICE_THOUSANDTHS)),
+            'unit_price' => UnitPrice::fromThousandths($this->faker->numberBetween(1, self::MAX_PRICE_CENTS) * self::THOUSANDTHS_PER_CENT),
             'unit' => Product::DEFAULT_UNIT,
             'vat_rate' => '21.00',
             'irpf_applicable' => false,
