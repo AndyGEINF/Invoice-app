@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Domain\Documents\Document;
+use App\Domain\Documents\Quote;
+use App\Domain\Shared\Contracts\Clock;
 use App\Http\Resources\Concerns\PresentsDocuments;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,6 +36,8 @@ final class DocumentRow extends JsonResource
             'full_number' => $document->full_number,
             'issue_date' => self::date($document->issue_date),
             'due_date' => self::date($document->due_date),
+            'valid_until' => self::date($document->valid_until),
+            'is_expired' => $document instanceof Quote && $document->isExpired(app(Clock::class)->today()),
             'customer_name' => self::customerName($document),
             'paid_at' => self::date($document->paid_at),
             ...self::amount('total', $document->total),

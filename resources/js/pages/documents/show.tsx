@@ -6,11 +6,13 @@ import { CustomerPicker } from '@/components/customers/CustomerPicker';
 import { DocumentPaper, PaperCustomerAddress } from '@/components/documents/DocumentPaper';
 import { DocumentSidePanel } from '@/components/documents/DocumentSidePanel';
 import { FieldError, LineEditor } from '@/components/documents/LineEditor';
+import { ExpiredBadge, StatusBadge } from '@/components/documents/StatusBadge';
 import { TaxBreakdown } from '@/components/documents/TaxBreakdown';
 import { StatusPill } from '@/components/StatusPill';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDate } from '@/lib/dates';
 import { decimalForInput, decimalForServer } from '@/lib/decimals';
 import { DOCUMENT_LIST_TITLES, documentUrl } from '@/lib/documents';
 import type {
@@ -110,6 +112,7 @@ function DraftEditor({ type, document, paper, form: saved, customer: savedCustom
     // El cliente elegido en el buscador (con lo que cambia el formulario); el id va en form.customer_id.
     const [customer, setCustomer] = useState<CustomerOption | null>(savedCustomer);
     const isNew = document === null;
+    const isQuote = type.value === 'quote';
     const stale = isNew || form.isDirty;
 
     function save() {
@@ -178,24 +181,52 @@ function DraftEditor({ type, document, paper, form: saved, customer: savedCustom
                 <DocumentPaper
                     paper={paper}
                     title={type.label}
-                    status={<StatusPill tone="neutral" label="Borrador" />}
-                    dates={
-                        <div className="flex flex-col items-end gap-2">
-                            <p>
-                                <span className="text-muted-foreground">Fecha de expedición</span> al emitir
-                            </p>
-                            <label className="flex items-center gap-2">
-                                <span className="text-muted-foreground">Vencimiento</span>
-                                <Input
-                                    type="date"
-                                    value={form.data.due_date ?? ''}
-                                    onChange={(event) => form.setData('due_date', event.target.value || null)}
-                                    className="h-8 w-40"
-                                    title="Vacío: según el plazo de pago del cliente"
-                                />
-                            </label>
-                            <FieldError message={errors.due_date} />
+                    status={
+                        <div className="flex flex-col items-end gap-1">
+                            {paper.number ? <p className="font-semibold">{paper.number}</p> : null}
+                            <div className="flex gap-1.5">
+                                {document ? <StatusBadge status={document.status} label={document.status_label} /> : <StatusPill tone="neutral" label="Borrador" />}
+                                {document?.is_expired ? <ExpiredBadge /> : null}
+                            </div>
                         </div>
+                    }
+                    dates={
+                        isQuote ? (
+                            <div className="flex flex-col items-end gap-2">
+                                <p>
+                                    <span className="text-muted-foreground">Fecha</span>{' '}
+                                    {document?.full_number ? formatDate(document.issue_date) : 'al marcarlo como enviado'}
+                                </p>
+                                <label className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Válido hasta</span>
+                                    <Input
+                                        type="date"
+                                        value={form.data.valid_until ?? ''}
+                                        onChange={(event) => form.setData('valid_until', event.target.value || null)}
+                                        className="h-8 w-40"
+                                        title="Vacío: 30 días desde la fecha del presupuesto"
+                                    />
+                                </label>
+                                <FieldError message={errors.valid_until} />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-end gap-2">
+                                <p>
+                                    <span className="text-muted-foreground">Fecha de expedición</span> al emitir
+                                </p>
+                                <label className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Vencimiento</span>
+                                    <Input
+                                        type="date"
+                                        value={form.data.due_date ?? ''}
+                                        onChange={(event) => form.setData('due_date', event.target.value || null)}
+                                        className="h-8 w-40"
+                                        title="Vacío: según el plazo de pago del cliente"
+                                    />
+                                </label>
+                                <FieldError message={errors.due_date} />
+                            </div>
+                        )
                     }
                     customer={
                         <div className="max-w-sm">

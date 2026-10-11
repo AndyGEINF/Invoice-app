@@ -1,18 +1,18 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Eye, FileText, Save, Send, Trash2 } from 'lucide-react';
+import { CircleCheck, CircleX, Copy, Eye, FileOutput, FileText, Save, Send, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 import { IssueDialog } from '@/components/documents/IssueDialog';
 import { FieldError } from '@/components/documents/LineEditor';
-import { PaymentStatusBadge, StatusBadge } from '@/components/documents/StatusBadge';
+import { ExpiredBadge, PaymentStatusBadge, StatusBadge } from '@/components/documents/StatusBadge';
 import { StatusPill } from '@/components/StatusPill';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate, formatDateTime } from '@/lib/dates';
-import { documentUrl } from '@/lib/documents';
+import { documentUrl, type DocumentAction } from '@/lib/documents';
 import { ISSUER_MISSING_LABELS } from '@/lib/issuer';
 import { TAB_TRIGGER_CLASS } from '@/lib/tabs';
 import type {
@@ -116,12 +116,23 @@ function GeneralTab({
     draft?: DraftState;
 }) {
     const [issuing, setIssuing] = useState(false);
+    const isQuote = type.value === 'quote';
+    const dirty = draft?.isDirty ?? false;
+
+    function post(action: DocumentAction, confirmText?: string) {
+        if (!document || (confirmText && !window.confirm(confirmText))) {
+            return;
+        }
+
+        router.post(documentUrl(type, document.id, action), {}, { preserveScroll: true });
+    }
 
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-1.5">
                     {document ? <StatusBadge status={document.status} label={document.status_label} /> : <StatusPill tone="neutral" label="Borrador" />}
+                    {document?.is_expired ? <ExpiredBadge /> : null}
                     {document?.payment_status && document.payment_status_label ? (
                         <PaymentStatusBadge status={document.payment_status} label={document.payment_status_label} />
                     ) : null}
@@ -138,13 +149,20 @@ function GeneralTab({
 
             {document ? (
                 <dl className="flex flex-col gap-2 text-sm">
-                    <DetailRow label="Número" value={document.full_number ?? 'Al emitir'} />
+                    <DetailRow label="Número" value={document.full_number ?? (isQuote ? 'Al enviar' : 'Al emitir')} />
                     <DetailRow label="Cliente" value={document.customer?.legal_name ?? 'Sin cliente'} />
                     <DetailRow label="Fecha" value={formatDate(document.issue_date) || 'Al emitir'} />
+                    {document.valid_until ? <DetailRow label="Válido hasta" value={formatDate(document.valid_until)} /> : null}
                     {document.due_date ? <DetailRow label="Vencimiento" value={formatDate(document.due_date)} /> : null}
                     {document.invoice_type_label ? <DetailRow label="Tipo" value={document.invoice_type_label} /> : null}
                     {document.series_code ? <DetailRow label="Serie" value={document.series_code} /> : null}
                 </dl>
+            ) : null}
+
+            {document?.is_expired ? (
+                <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger-strong">
+                    Caducó el {formatDate(document.valid_until)} y ya no se puede aceptar. Duplícalo para enviar uno nuevo con otra fecha.
+                </p>
             ) : null}
 
             <RelatedLinks related={related} />
@@ -154,7 +172,7 @@ function GeneralTab({
                     <>
                         <Button onClick={draft.onSave} disabled={draft.processing || (!draft.isNew && !draft.isDirty)} variant={draft.isNew || draft.isDirty ? 'default' : 'outline'}>
                             <Save aria-hidden />
-                            {draft.processing ? 'Guardando…' : 'Guardar borrador'}
+                            {draft.processing ? 'Guardando…' : !document || document.status === 'draft' ? 'Guardar borrador' : 'Guardar cambios'}
                         </Button>
                         <p className="text-center text-xs text-muted-foreground">También con Ctrl + S</p>
                     </>
@@ -162,7 +180,7 @@ function GeneralTab({
 
                 {can.issue && document ? (
                     <>
-                        <IssueButton dirty={draft?.isDirty ?? false} onClick={() => setIssuing(true)} label={`Emitir ${type.label.toLowerCase()}`} />
+                        <GuardedButton requiresIssuer dirty={dirty} onClick={() => setIssuing(true)} icon={Send} label={`Emitir ${type.label.toLowerCase()}`} />
                         <IssueDialog
                             open={issuing}
                             onOpenChange={setIssuing}
@@ -172,6 +190,33 @@ function GeneralTab({
                             simplified={draft?.simplified ?? false}
                         />
                     </>
+                ) : null}
+
+                {can.quote_send ? (
+                    <>
+                        <GuardedButton requiresIssuer dirty={dirty} onClick={() => post('send')} icon={Send} label="Marcar como enviado" />
+                        <p className="text-center text-xs text-muted-foreground">Le asigna su número definitivo.</p>
+                    </>
+                ) : null}
+
+                {can.convert ? <GuardedButton dirty={dirty} onClick={() => post('convert')} icon={FileOutput} label="Convertir en factura" /> : null}
+
+                {can.quote_accept ? (
+                    <GuardedButton dirty={dirty} variant="outline" onClick={() => post('accept')} icon={CircleCheck} label="Marcar como aceptado" />
+                ) : null}
+
+                {can.quote_reject ? (
+                    <Button variant="ghost" className="justify-start" onClick={() => post('reject', '¿Marcar este presupuesto como rechazado?')}>
+                        <CircleX aria-hidden />
+                        Marcar como rechazado
+                    </Button>
+                ) : null}
+
+                {can.duplicate && document ? (
+                    <Button variant="ghost" className="justify-start" onClick={() => post('duplicate')}>
+                        <Copy aria-hidden />
+                        Duplicar
+                    </Button>
                 ) : null}
 
                 {document ? (
@@ -188,13 +233,13 @@ function GeneralTab({
                         variant="ghost"
                         className="justify-start text-destructive hover:text-destructive"
                         onClick={() => {
-                            if (window.confirm('¿Borrar este borrador? No se puede deshacer.')) {
+                            if (window.confirm(isQuote ? '¿Borrar este presupuesto? No se puede deshacer.' : '¿Borrar este borrador? No se puede deshacer.')) {
                                 router.delete(documentUrl(type, document.id));
                             }
                         }}
                     >
                         <Trash2 aria-hidden />
-                        Borrar borrador
+                        {isQuote ? 'Borrar presupuesto' : 'Borrar borrador'}
                     </Button>
                 ) : null}
             </div>
@@ -203,21 +248,38 @@ function GeneralTab({
 }
 
 /**
- * Emitir solo con el emisor completo y sin cambios pendientes; si no, el botón
- * explica qué falta.
+ * Acción que no se puede hacer con cambios sin guardar (y, si `requiresIssuer`,
+ * sin los datos de la empresa completos). Si no se puede, el botón explica por
+ * qué en lugar de fallar al pulsarlo.
  */
-function IssueButton({ dirty, onClick, label }: { dirty: boolean; onClick: () => void; label: string }) {
+function GuardedButton({
+    dirty,
+    requiresIssuer = false,
+    onClick,
+    icon: Icon,
+    label,
+    variant = 'default',
+}: {
+    dirty: boolean;
+    requiresIssuer?: boolean;
+    onClick: () => void;
+    icon: ComponentType<{ 'aria-hidden'?: boolean }>;
+    label: string;
+    variant?: 'default' | 'outline';
+}) {
     const { issuer } = usePage().props;
-    const reason = !issuer.isComplete
-        ? `Completa los datos de tu empresa: falta ${issuer.missing.map((field) => ISSUER_MISSING_LABELS[field]).join(', ')}.`
-        : dirty
-          ? 'Guarda los cambios antes de emitir.'
-          : null;
+    let reason: string | null = null;
+
+    if (requiresIssuer && !issuer.isComplete) {
+        reason = `Completa los datos de tu empresa: falta ${issuer.missing.map((field) => ISSUER_MISSING_LABELS[field]).join(', ')}.`;
+    } else if (dirty) {
+        reason = 'Guarda los cambios antes de continuar.';
+    }
 
     if (!reason) {
         return (
-            <Button onClick={onClick}>
-                <Send aria-hidden />
+            <Button variant={variant} onClick={onClick}>
+                <Icon aria-hidden />
                 {label}
             </Button>
         );
@@ -228,8 +290,8 @@ function IssueButton({ dirty, onClick, label }: { dirty: boolean; onClick: () =>
             <TooltipTrigger asChild>
                 {/* El span recibe el ratón: un botón deshabilitado no lanza eventos. */}
                 <span tabIndex={0} className="block">
-                    <Button disabled className="w-full">
-                        <Send aria-hidden />
+                    <Button variant={variant} disabled className="w-full">
+                        <Icon aria-hidden />
                         {label}
                     </Button>
                 </span>
@@ -282,7 +344,11 @@ function RelatedLinks({ related }: { related: DocumentRelations | null }) {
 
 function SendsTab({ document, sends }: { document: DocumentDetail | null; sends: DocumentSendView[] }) {
     if (!document || document.status === 'draft') {
-        return <EmptyTab>Emite el documento para poder enviarlo al cliente.</EmptyTab>;
+        return (
+            <EmptyTab>
+                {document?.type === 'quote' ? 'Guarda y marca el presupuesto como enviado para poder mandarlo por email.' : 'Emite el documento para poder enviarlo al cliente.'}
+            </EmptyTab>
+        );
     }
 
     if (sends.length === 0) {

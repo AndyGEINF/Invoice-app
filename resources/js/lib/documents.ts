@@ -38,7 +38,10 @@ export const DOCUMENT_SEGMENTS: Record<DocumentTypeValue, string> = {
 };
 
 /** URL de un documento: /invoices, /invoices/{id}, /invoices/{id}/edit… */
-export function documentUrl(type: DocumentTypeProps, id?: string, action?: 'edit' | 'preview' | 'issue'): string {
+/** Acciones con URL propia bajo /{tipo}/{id}/. */
+export type DocumentAction = 'edit' | 'preview' | 'issue' | 'send' | 'accept' | 'reject' | 'convert' | 'duplicate';
+
+export function documentUrl(type: DocumentTypeProps, id?: string, action?: DocumentAction): string {
     const base = `/${type.segment}`;
 
     if (!id) {

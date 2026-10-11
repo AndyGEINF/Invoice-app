@@ -53,6 +53,9 @@ export interface DocumentRow {
     full_number: string | null;
     issue_date: string | null;
     due_date: string | null;
+    /** Presupuestos: hasta cuándo vale y si ya caducó (enviado y fuera de plazo). */
+    valid_until: string | null;
+    is_expired: boolean;
     customer_name: string | null;
     paid_at: string | null;
     total: number;
@@ -289,6 +292,11 @@ export interface DocumentAbilities {
     send: boolean;
     rectify: boolean;
     convert: boolean;
+    /** Ciclo del presupuesto: marcar como enviado (le da número), aceptado o rechazado. */
+    quote_send: boolean;
+    quote_accept: boolean;
+    quote_reject: boolean;
+    duplicate: boolean;
     mark_paid: boolean;
     unmark_paid: boolean;
 }

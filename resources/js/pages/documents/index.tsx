@@ -47,8 +47,32 @@ const ALL = 'all';
 
 type FilterKey = keyof DocumentFilters;
 
+/**
+ * Lo que cambia entre facturas y presupuestos: las tarjetas significan cosas
+ * distintas (ver DocumentIndexQuery::totals) y la fecha clave es el
+ * vencimiento o la validez.
+ */
+const FISCAL_COPY = {
+    totals: ['Importe emitido', 'Pendiente de cobro', 'Vencido'],
+    dateColumn: 'Vencimiento',
+    overdue: ['vencida', 'vencidas'],
+    overdueSubtitle: 'pendiente de cobro',
+    pendingDrafts: 'sin emitir',
+} as const;
+
+const QUOTE_COPY = {
+    totals: ['Presupuestado', 'Aceptado sin facturar', 'Caducado'],
+    dateColumn: 'Válido hasta',
+    overdue: ['caducado', 'caducados'],
+    overdueSubtitle: 'ya no se pueden aceptar',
+    pendingDrafts: 'sin enviar',
+} as const;
+
 export default function DocumentIndex({ type, documents, filters, totals, alerts, series, options }: Props) {
     const newLabel = NEW_DOCUMENT_LABELS[type.value];
+    const isQuote = type.value === 'quote';
+    const copy = isQuote ? QUOTE_COPY : FISCAL_COPY;
+    const keyDate = (row: DocumentRow): string | null => (isQuote ? row.valid_until : row.due_date);
 
     function applyFilters(changes: Partial<Record<FilterKey, string | null>>) {
         const next = Object.fromEntries(
@@ -82,9 +106,9 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
             />
 
             <section aria-label="Totales" className="mb-4 grid gap-3 sm:grid-cols-3">
-                <StatCard label="Importe emitido" value={totals.sum_total_formatted} tone="info" />
-                <StatCard label="Pendiente de cobro" value={totals.sum_pending_formatted} tone="warning" />
-                <StatCard label="Vencido" value={totals.sum_overdue_formatted} tone="danger" />
+                <StatCard label={copy.totals[0]} value={totals.sum_total_formatted} tone="info" />
+                <StatCard label={copy.totals[1]} value={totals.sum_pending_formatted} tone="warning" />
+                <StatCard label={copy.totals[2]} value={totals.sum_overdue_formatted} tone="danger" />
             </section>
 
             <section aria-label="Filtros" className="mb-4 grid gap-3 md:grid-cols-6">
@@ -112,13 +136,15 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                     options={options.statuses}
                     onChange={(value) => applyFilters({ status: value })}
                 />
-                <FilterSelect
-                    id="payment_status"
-                    label="Cobro"
-                    value={filters.payment_status}
-                    options={options.payment_statuses}
-                    onChange={(value) => applyFilters({ payment_status: value })}
-                />
+                {options.payment_statuses.length > 0 ? (
+                    <FilterSelect
+                        id="payment_status"
+                        label="Cobro"
+                        value={filters.payment_status}
+                        options={options.payment_statuses}
+                        onChange={(value) => applyFilters({ payment_status: value })}
+                    />
+                ) : null}
 
                 <div>
                     <Label htmlFor="from" className="mb-1.5 text-xs text-muted-foreground">
@@ -163,7 +189,7 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                                 <HeadCell className="hidden sm:table-cell">Cliente</HeadCell>
                                 <HeadCell className="text-right">Importe</HeadCell>
                                 <HeadCell className="hidden text-right sm:table-cell">Fecha</HeadCell>
-                                <HeadCell className="hidden text-right lg:table-cell">Vencimiento</HeadCell>
+                                <HeadCell className="hidden text-right lg:table-cell">{copy.dateColumn}</HeadCell>
                                 <HeadCell className="hidden text-right sm:table-cell">Estado</HeadCell>
                             </TableRow>
                         </TableHeader>
@@ -194,6 +220,7 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                                                 statusLabel={row.status_label}
                                                 paymentStatus={row.payment_status}
                                                 paymentStatusLabel={row.payment_status_label}
+                                                isExpired={row.is_expired}
                                             />
                                         </span>
                                     </TableCell>
@@ -201,7 +228,7 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                                         {formatDate(row.issue_date) || '—'}
                                     </TableCell>
                                     <TableCell className="hidden px-3 py-3 sm:px-4 text-right text-muted-foreground tabular-nums lg:table-cell">
-                                        {formatDate(row.due_date) || '—'}
+                                        {formatDate(keyDate(row)) || '—'}
                                     </TableCell>
                                     <TableCell className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
                                         <RowStatus
@@ -209,6 +236,7 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                                             statusLabel={row.status_label}
                                             paymentStatus={row.payment_status}
                                             paymentStatusLabel={row.payment_status_label}
+                                            isExpired={row.is_expired}
                                         />
                                     </TableCell>
                                 </TableRow>
@@ -226,18 +254,18 @@ export default function DocumentIndex({ type, documents, filters, totals, alerts
                         <AlertCard
                             tone="danger"
                             icon={Clock}
-                            title={countLabel(type.value, alerts.overdue.count, alerts.overdue.count === 1 ? 'vencida' : 'vencidas')}
-                            subtitle={`Valor: ${alerts.overdue.sum_formatted}, pendiente de cobro`}
+                            title={countLabel(type.value, alerts.overdue.count, alerts.overdue.count === 1 ? copy.overdue[0] : copy.overdue[1])}
+                            subtitle={`Valor: ${alerts.overdue.sum_formatted}, ${copy.overdueSubtitle}`}
                             group={alerts.overdue}
                             type={type}
-                            detail={(row) => `Venció el ${formatDate(row.due_date)}`}
+                            detail={(row) => `${isQuote ? 'Caducó' : 'Venció'} el ${formatDate(keyDate(row))}`}
                         />
                     ) : null}
                     {alerts.drafts.count > 0 ? (
                         <AlertCard
                             tone="info"
                             icon={PencilLine}
-                            title={`${alerts.drafts.count} ${alerts.drafts.count === 1 ? 'borrador' : 'borradores'} sin emitir`}
+                            title={`${alerts.drafts.count} ${alerts.drafts.count === 1 ? 'borrador' : 'borradores'} ${copy.pendingDrafts}`}
                             subtitle={`Valor: ${alerts.drafts.sum_formatted}`}
                             group={alerts.drafts}
                             type={type}

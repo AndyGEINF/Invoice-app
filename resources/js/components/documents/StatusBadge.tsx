@@ -23,21 +23,33 @@ export function StatusBadge({ status, label, className }: { status: DocumentStat
     return <StatusPill tone={STATUS_TONES[status]} label={label} className={className} />;
 }
 
+/** Presupuesto enviado con la validez superada: no es un estado guardado, se deduce. */
+export function ExpiredBadge({ className }: { className?: string }) {
+    return <StatusPill tone="danger" label="Caducado" className={className} />;
+}
+
 /**
  * Un solo estado por fila, como en el listado: si está emitida importa si se
- * ha cobrado; si no, su estado (borrador, rectificada…).
+ * ha cobrado; si es un presupuesto caducado, eso; si no, su estado (borrador,
+ * rectificada, aceptado…).
  */
 export function RowStatus({
     status,
     statusLabel,
     paymentStatus,
     paymentStatusLabel,
+    isExpired = false,
 }: {
     status: DocumentStatus;
     statusLabel: string;
     paymentStatus: PaymentStatus | null;
     paymentStatusLabel: string | null;
+    isExpired?: boolean;
 }) {
+    if (isExpired) {
+        return <ExpiredBadge />;
+    }
+
     if ((status === 'issued' || status === 'sent') && paymentStatus && paymentStatusLabel) {
         return <PaymentStatusBadge status={paymentStatus} label={paymentStatusLabel} />;
     }
