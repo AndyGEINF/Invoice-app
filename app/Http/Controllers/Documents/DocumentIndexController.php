@@ -14,6 +14,7 @@ use App\Domain\Shared\Money;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Documents\Concerns\DocumentPageProps;
 use App\Http\Queries\DocumentIndexQuery;
+use App\Http\Queries\PerPage;
 use App\Http\Resources\DocumentRow;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,7 +45,7 @@ final class DocumentIndexController extends Controller
             ->orderByRaw('issue_date DESC NULLS FIRST')
             ->orderByDesc('number')
             ->orderByDesc('created_at')
-            ->paginate(DocumentIndexQuery::PER_PAGE)
+            ->paginate(PerPage::fromRequest($request))
             ->withQueryString()
             ->through(fn (Document $document): array => (new DocumentRow($document))->resolve($request));
 

@@ -46,8 +46,21 @@ final class DemoSeeder extends Seeder
 
     private const string VAT_RATE = '21.00';
 
-    public function run(): void
+    /** Días entre facturas de ejemplo, como mucho; con muchas se juntan para no salirse del año. */
+    private const int MAX_DAYS_BETWEEN_INVOICES = 10;
+
+    /** Hasta dónde se reparten hacia atrás las facturas emitidas. */
+    private const int MAX_DAYS_BACK = 270;
+
+    /** Con más volumen, una de cada tantas facturas antiguas sale cobrada, para que haya de todo. */
+    private const int PAID_EVERY = 3;
+
+    /** Cuántas veces el tamaño normal (1 = demo; `LargeDemoSeeder` sube el volumen). */
+    private int $scale = 1;
+
+    public function run(int $scale = 1): void
     {
+        $this->scale = max(1, $scale);
         $this->call(InstallSeeder::class);
 
         $this->configureIssuer();
@@ -74,7 +87,7 @@ final class DemoSeeder extends Seeder
             Customer::factory()->withSurcharge()->create(['legal_name' => 'Ferretería La Esquina SL']),
             Customer::factory()->intraCommunity()->create(),
             Customer::factory()->individual()->create(['legal_name' => 'Laura Martín Gil']),
-            ...Customer::factory()->count(self::CUSTOMERS - 4)->create()->all(),
+            ...Customer::factory()->count(self::CUSTOMERS * $this->scale - 4)->create()->all(),
         ];
     }
 
@@ -85,7 +98,7 @@ final class DemoSeeder extends Seeder
             Product::factory()->service()->priced('40')->create(['name' => 'Hora de reparación', 'sku' => 'SRV-0001']),
             Product::factory()->service()->priced('33.333')->create(['name' => 'Hora de consultoría', 'sku' => 'SRV-0002']),
             Product::factory()->priced('12.50')->vat('10.00')->create(['name' => 'Menú del día', 'sku' => 'PRD-0001']),
-            ...Product::factory()->count(self::PRODUCTS - 3)->create()->all(),
+            ...Product::factory()->count(self::PRODUCTS * $this->scale - 3)->create()->all(),
         ];
     }
 
@@ -111,9 +124,12 @@ final class DemoSeeder extends Seeder
             static fn (Customer $customer): bool => ! ($customer->taxId()?->isEuVat() ?? false),
         ));
 
-        for ($i = 0; $i < self::ISSUED_INVOICES; $i++) {
+        $count = self::ISSUED_INVOICES * $this->scale;
+        $step = min(self::MAX_DAYS_BETWEEN_INVOICES, intdiv(self::MAX_DAYS_BACK, $count));
+
+        for ($i = 0; $i < $count; $i++) {
             $customer = $billable[$i % count($billable)];
-            $issueDate = $today->subDays(10 * (self::ISSUED_INVOICES - $i));
+            $issueDate = $today->subDays($step * ($count - $i));
 
             DB::transaction(function () use ($series, $customer, $products, $i, $issueDate): void {
                 $invoice = Invoice::query()->create(['customer_id' => $customer->id]);
@@ -144,6 +160,15 @@ final class DemoSeeder extends Seeder
         // Una cobrada (la más reciente) y una vencida (la más antigua, con plazo corto).
         $latest = Invoice::query()->latest('issue_date')->first();
         $latest?->update(['paid_at' => $today, 'paid_note' => 'Transferencia']);
+
+        if ($this->scale > 1) {
+            Invoice::query()->orderBy('number')->get()
+                ->filter(fn (Invoice $invoice, int $index): bool => $index % self::PAID_EVERY === 1)
+                ->each(fn (Invoice $invoice) => $invoice->update([
+                    'paid_at' => CarbonImmutable::parse($invoice->issue_date)->addDays(self::MAX_DAYS_BETWEEN_INVOICES)->min($today),
+                    'paid_note' => 'Transferencia',
+                ]));
+        }
     }
 
     /**
@@ -154,24 +179,26 @@ final class DemoSeeder extends Seeder
     {
         $statuses = [QuoteStatus::Draft, QuoteStatus::Sent, QuoteStatus::Accepted];
 
-        for ($i = 0; $i < self::QUOTES; $i++) {
+        for ($i = 0; $i < self::QUOTES * $this->scale; $i++) {
             $quote = Quote::query()->create([
-                'customer_id' => $customers[$i]->id,
+                'customer_id' => $customers[$i % count($customers)]->id,
                 'issue_date' => CarbonImmutable::today(),
                 'valid_until' => CarbonImmutable::today()->addDays((int) config('invoice.quote.default_validity_days')),
             ]);
 
-            $totals = $this->addSingleLine($quote, $products[$i], (string) (($i + 1) * 2));
+            $totals = $this->addSingleLine($quote, $products[$i % count($products)], (string) (($i % self::QUOTES + 1) * 2));
             $quote->update($totals);
 
             // Por el caso de uso, como en la aplicación: al enviarse recibe número.
             $transition = app(TransitionQuote::class);
 
-            if ($statuses[$i] !== QuoteStatus::Draft) {
+            $status = $statuses[$i % count($statuses)];
+
+            if ($status !== QuoteStatus::Draft) {
                 $quote = $transition($quote, QuoteStatus::Sent);
             }
 
-            if ($statuses[$i] === QuoteStatus::Accepted) {
+            if ($status === QuoteStatus::Accepted) {
                 $transition($quote, QuoteStatus::Accepted);
             }
         }

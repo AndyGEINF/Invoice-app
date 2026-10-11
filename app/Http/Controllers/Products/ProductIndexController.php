@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Products;
 use App\Domain\Catalog\Product;
 use App\Http\Controllers\Controller;
 use App\Http\Queries\CatalogIndexQuery;
+use App\Http\Queries\PerPage;
 use App\Http\Resources\ProductRow;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ final class ProductIndexController extends Controller
 
         $products = $filters->apply(Product::query(), self::SEARCH_COLUMNS)
             ->orderBy('name')
-            ->paginate(CatalogIndexQuery::PER_PAGE)
+            ->paginate(PerPage::fromRequest($request))
             ->withQueryString()
             ->through(fn (Product $product): array => (new ProductRow($product))->resolve($request));
 

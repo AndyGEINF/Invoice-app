@@ -26,8 +26,6 @@ use Throwable;
  */
 final readonly class DocumentIndexQuery
 {
-    public const int PER_PAGE = 25;
-
     public const int MAX_SEARCH_LENGTH = 100;
 
     private const string DATE_FORMAT = 'Y-m-d';

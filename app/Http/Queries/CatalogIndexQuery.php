@@ -14,8 +14,6 @@ use Illuminate\Http\Request;
  */
 final readonly class CatalogIndexQuery
 {
-    public const int PER_PAGE = 25;
-
     /** Resultados de los buscadores incrementales (`/customers/search`, `/products/search`). */
     public const int SEARCH_LIMIT = 20;
 

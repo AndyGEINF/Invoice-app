@@ -12,6 +12,7 @@ use App\Domain\Shared\Money;
 use App\Http\Controllers\Controller;
 use App\Http\Queries\CatalogIndexQuery;
 use App\Http\Queries\InvoiceTotals;
+use App\Http\Queries\PerPage;
 use App\Http\Resources\CustomerRow;
 use App\Http\Resources\DocumentRow;
 use Carbon\CarbonImmutable;
@@ -46,7 +47,7 @@ final class CustomerIndexController extends Controller
         $page = $filters->apply(Customer::query(), self::SEARCH_COLUMNS)
             ->with('contacts')
             ->orderBy('legal_name')
-            ->paginate(CatalogIndexQuery::PER_PAGE)
+            ->paginate(PerPage::fromRequest($request))
             ->withQueryString();
 
         /** @var list<string> $ids */

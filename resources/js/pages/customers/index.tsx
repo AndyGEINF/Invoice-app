@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowRight, FilePlus, Mail, MousePointerClick, Phone, Plus, Search } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowRight, FilePlus, Mail, MousePointerClick, Phone, Plus, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { ArchivedTabs } from '@/components/ArchivedTabs';
@@ -229,16 +229,23 @@ export default function CustomerIndex({ customers, filters, counts, stats, top_c
     );
 }
 
-/** Lo que debe el cliente; en rojo si parte está vencida. */
+/**
+ * Lo que debe el cliente; en rojo si parte está vencida. Si está vencido todo,
+ * basta con decir "Vencido": repetir el mismo importe no aporta nada.
+ */
 function UnpaidCell({ customer }: { customer: CustomerIndexRow }) {
     if (customer.unpaid_total === 0) {
         return <span className="text-muted-foreground">—</span>;
     }
 
+    const allOverdue = customer.overdue_total === customer.unpaid_total;
+
     return (
         <span className="inline-flex flex-col items-end">
             <span className={cn('font-semibold tabular-nums', customer.overdue_total > 0 && 'text-danger-strong')}>{customer.unpaid_total_formatted}</span>
-            {customer.overdue_total > 0 ? <span className="text-xs text-danger">{customer.overdue_total_formatted} vencido</span> : null}
+            {customer.overdue_total > 0 ? (
+                <span className="text-xs text-danger">{allOverdue ? 'Vencido' : `${customer.overdue_total_formatted} vencido`}</span>
+            ) : null}
         </span>
     );
 }
@@ -262,16 +269,30 @@ function SelectedPanel({ customer }: { customer: SelectedCustomer }) {
                         </div>
                     </div>
                 </div>
+                {/* Las mismas acciones que la ficha: archivado, solo se puede restaurar. */}
                 <div className="mt-3 flex gap-2">
                     <Button size="sm" variant="outline" className="flex-1" asChild>
                         <Link href={url}>Ver ficha</Link>
                     </Button>
-                    <Button size="sm" className="flex-1" asChild>
-                        <Link href={`/invoices/create?customer_id=${customer.id}`}>
-                            <FilePlus aria-hidden />
-                            Nueva factura
-                        </Link>
-                    </Button>
+                    {customer.is_archived ? (
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => router.post(`${url}/restore`, {}, { preserveScroll: true })}>
+                            <ArchiveRestore aria-hidden />
+                            Restaurar
+                        </Button>
+                    ) : (
+                        <>
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => router.post(`${url}/archive`, {}, { preserveScroll: true })}>
+                                <Archive aria-hidden />
+                                Archivar
+                            </Button>
+                            <Button size="sm" className="flex-1" asChild>
+                                <Link href={`/invoices/create?customer_id=${customer.id}`}>
+                                    <FilePlus aria-hidden />
+                                    Nueva factura
+                                </Link>
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 

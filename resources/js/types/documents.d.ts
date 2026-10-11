@@ -34,6 +34,10 @@ export interface Paginated<T> {
     to: number | null;
     prev_page_url: string | null;
     next_page_url: string | null;
+    /** URL del listado sin `?page=`. */
+    path: string;
+    /** Anterior, las páginas (con "..." donde se saltan) y Siguiente, ya con los filtros en la URL. */
+    links: { url: string | null; label: string; active: boolean }[];
 }
 
 export interface SeriesOption {
