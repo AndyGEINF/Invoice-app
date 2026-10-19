@@ -17,6 +17,7 @@ use App\Http\Controllers\Documents\DocumentShowController;
 use App\Http\Controllers\Documents\DuplicateDocumentController;
 use App\Http\Controllers\Documents\InternalNotesController;
 use App\Http\Controllers\Documents\IssueInvoiceController;
+use App\Http\Controllers\Documents\PaidMarkerController;
 use App\Http\Controllers\Documents\QuoteTransitionController;
 use App\Http\Controllers\Issuer\IssuerSettingsController;
 use App\Http\Controllers\Products\ProductArchiveController;
@@ -100,6 +101,10 @@ Route::name('documents.')->group(function () use ($allTypes, $quotes, $fiscalTyp
             });
 
             Route::post('/issue', IssueInvoiceController::class)->whereIn('type', $fiscalTypes)->name('issue');
+
+            // Marcador visual de cobro (sin importes ni formas de pago).
+            Route::post('/paid', [PaidMarkerController::class, 'store'])->whereIn('type', $fiscalTypes)->name('paid.store');
+            Route::delete('/paid', [PaidMarkerController::class, 'destroy'])->whereIn('type', $fiscalTypes)->name('paid.destroy');
             Route::post('/duplicate', DuplicateDocumentController::class)->whereIn('type', $creatableTypes)->name('duplicate');
 
             // Ciclo del presupuesto: enviar, aceptar, rechazar y convertir en factura.

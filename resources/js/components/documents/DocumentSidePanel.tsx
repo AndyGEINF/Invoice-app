@@ -1,10 +1,11 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { CircleCheck, CircleX, Copy, Eye, FileOutput, FileText, Save, Send, Trash2 } from 'lucide-react';
+import { CircleCheck, CircleX, Copy, Eye, FileOutput, FileText, Save, Send, Trash2, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
 import { IssueDialog } from '@/components/documents/IssueDialog';
 import { FieldError } from '@/components/documents/LineEditor';
+import { PaidDialog } from '@/components/documents/PaidDialog';
 import { ExpiredBadge, PaymentStatusBadge, StatusBadge } from '@/components/documents/StatusBadge';
 import { StatusPill } from '@/components/StatusPill';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,7 @@ function GeneralTab({
     draft?: DraftState;
 }) {
     const [issuing, setIssuing] = useState(false);
+    const [markingPaid, setMarkingPaid] = useState(false);
     const isQuote = type.value === 'quote';
     const dirty = draft?.isDirty ?? false;
 
@@ -156,6 +158,8 @@ function GeneralTab({
                     {document.due_date ? <DetailRow label="Vencimiento" value={formatDate(document.due_date)} /> : null}
                     {document.invoice_type_label ? <DetailRow label="Tipo" value={document.invoice_type_label} /> : null}
                     {document.series_code ? <DetailRow label="Serie" value={document.series_code} /> : null}
+                    {document.paid_at ? <DetailRow label="Cobrada el" value={formatDate(document.paid_at)} /> : null}
+                    {document.paid_at && document.paid_note ? <DetailRow label="Nota del cobro" value={document.paid_note} /> : null}
                 </dl>
             ) : null}
 
@@ -190,6 +194,31 @@ function GeneralTab({
                             simplified={draft?.simplified ?? false}
                         />
                     </>
+                ) : null}
+
+                {can.mark_paid && document ? (
+                    <>
+                        <Button onClick={() => setMarkingPaid(true)}>
+                            <CircleCheck aria-hidden />
+                            Marcar como cobrada
+                        </Button>
+                        <PaidDialog open={markingPaid} onOpenChange={setMarkingPaid} type={type} documentId={document.id} fullNumber={document.full_number} />
+                    </>
+                ) : null}
+
+                {can.unmark_paid && document ? (
+                    <Button
+                        variant="ghost"
+                        className="justify-start"
+                        onClick={() => {
+                            if (window.confirm('¿Quitar la marca de cobrada? Volverá a contar como pendiente o vencida.')) {
+                                router.delete(documentUrl(type, document.id, 'paid'), { preserveScroll: true });
+                            }
+                        }}
+                    >
+                        <Undo2 aria-hidden />
+                        Desmarcar como cobrada
+                    </Button>
                 ) : null}
 
                 {can.quote_send ? (

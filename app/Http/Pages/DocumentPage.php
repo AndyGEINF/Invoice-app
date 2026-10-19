@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Pages;
 
 use App\Domain\Customers\Customer;
+use App\Domain\Documents\CreditNote;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentEvent;
 use App\Domain\Documents\DocumentSend;
 use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Enums\QuoteStatus;
+use App\Domain\Documents\Invoice;
 use App\Domain\Documents\Quote;
 use App\Domain\Documents\Series;
 use App\Domain\Issuer\Issuer;
@@ -190,7 +192,7 @@ final class DocumentPage
 
     /**
      * Acciones que el documento admite ahora. Las que dependen de historias
-     * posteriores (envío por email, rectificación, cobro) se activan al
+     * posteriores (envío por email, rectificación) se activan al
      * implementarlas; hasta entonces se ofrecen como no disponibles.
      *
      * @return array<string, bool>
@@ -201,6 +203,8 @@ final class DocumentPage
         $saved = $document !== null;
         $quote = $document instanceof Quote ? $document : null;
         $quoteStatus = $quote?->status;
+        // Cobro: facturas y rectificativas emitidas con algo que cobrar.
+        $collectable = ($document instanceof Invoice || $document instanceof CreditNote) && $document->isIssued() && ! $document->total->isZero();
 
         return [
             'edit' => $editable,
@@ -213,8 +217,8 @@ final class DocumentPage
             'quote_accept' => $quoteStatus === QuoteStatus::Sent && ! $quote->isExpired(app(Clock::class)->today()),
             'quote_reject' => $quoteStatus === QuoteStatus::Sent,
             'duplicate' => $saved && $type !== DocumentType::CreditNote,
-            'mark_paid' => false,
-            'unmark_paid' => false,
+            'mark_paid' => $collectable && $document->paid_at === null,
+            'unmark_paid' => $collectable && $document->paid_at !== null,
         ];
     }
 }
