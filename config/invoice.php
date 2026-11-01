@@ -86,6 +86,8 @@ return [
         'timeout' => (int) env('BROWSERSHOT_TIMEOUT', 60),
         // Dentro de un contenedor Chromium no puede usar su sandbox.
         'no_sandbox' => (bool) env('BROWSERSHOT_NO_SANDBOX', false),
+        'tries' => 3,
+        'backoff_seconds' => 30,
     ],
 
     'issuer' => [

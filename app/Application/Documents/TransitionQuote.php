@@ -16,6 +16,7 @@ use App\Domain\Documents\SeriesNumberAllocator;
 use App\Domain\Documents\SnapshotFactory;
 use App\Domain\Issuer\Issuer;
 use App\Domain\Shared\Contracts\Clock;
+use App\Jobs\RenderDocumentPdfJob;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -110,6 +111,8 @@ final readonly class TransitionQuote
             'valid_until' => $quote->valid_until ?? $today->addDays((int) config('invoice.quote.default_validity_days')),
             'status' => QuoteStatus::Sent,
         ]);
+
+        RenderDocumentPdfJob::dispatch($quote->id);
     }
 
     private function accept(Quote $quote): void

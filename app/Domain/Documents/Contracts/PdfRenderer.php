@@ -10,7 +10,8 @@ use App\Domain\Documents\Document;
  * Genera el PDF de un documento a partir de la misma plantilla que la
  * previsualización en pantalla: un diseño, no dos.
  *
- * Se ejecuta siempre desde un job de cola, nunca en la petición HTTP.
+ * Se ejecuta siempre desde un job de cola, nunca en la petición HTTP: también el
+ * de los presupuestos. Los borradores no tienen PDF, solo vista previa.
  */
 interface PdfRenderer
 {

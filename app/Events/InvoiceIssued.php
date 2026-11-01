@@ -10,8 +10,8 @@ use Illuminate\Foundation\Events\Dispatchable;
  * Una factura o rectificativa acaba de recibir su número.
  *
  * Se lanza dentro de la transacción de emisión: los listeners síncronos (el
- * historial) quedan en la misma transacción, y los que van a cola (PDF, más
- * adelante) deben esperar al commit.
+ * historial) quedan en la misma transacción, y los que van a cola (el PDF) deben
+ * esperar al commit.
  */
 final readonly class InvoiceIssued
 {
