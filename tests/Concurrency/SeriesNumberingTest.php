@@ -42,7 +42,8 @@ function testDatabaseEnv(): array
         'DB_DATABASE' => (string) $db['database'],
         'DB_USERNAME' => (string) $db['username'],
         'DB_PASSWORD' => (string) $db['password'],
-        'QUEUE_CONNECTION' => 'sync',
+        // Sin cola: aquí solo importa el número, no el PDF que se generaría después.
+        'QUEUE_CONNECTION' => 'null',
     ];
 }
 

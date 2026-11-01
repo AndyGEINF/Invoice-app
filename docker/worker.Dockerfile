@@ -17,6 +17,8 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scr
 
 FROM node:22-alpine AS assets
 WORKDIR /app
+# puppeteer solo hace falta en el worker, que usa el Chromium del sistema.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
@@ -43,7 +45,8 @@ COPY --chown=www-data:www-data --from=assets /app/public/build ./public/build
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
     BROWSERSHOT_CHROME_PATH=/usr/bin/chromium \
     BROWSERSHOT_NODE_BINARY=/usr/bin/node \
-    BROWSERSHOT_NPM_BINARY=/usr/bin/npm
+    BROWSERSHOT_NPM_BINARY=/usr/bin/npm \
+    BROWSERSHOT_NO_SANDBOX=true
 RUN rm -f .env \
     && npm install --omit=dev --no-save puppeteer \
     && mkdir -p storage/app/private/documents storage/app/public/logos \

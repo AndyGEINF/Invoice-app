@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\Customers\Contracts\VatNumberValidator;
+use App\Domain\Documents\Contracts\DocumentStorage;
+use App\Domain\Documents\Contracts\PdfRenderer;
 use App\Domain\Documents\CreditNote;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentLine;
@@ -15,6 +17,9 @@ use App\Domain\Documents\Quote;
 use App\Domain\Shared\Contracts\Clock;
 use App\Domain\Tax\SpanishTaxCalculator;
 use App\Domain\Tax\TaxCalculator;
+use App\Infrastructure\Pdf\BrowsershotRenderer;
+use App\Infrastructure\Pdf\FakePdfRenderer;
+use App\Infrastructure\Storage\FlysystemDocumentStorage;
 use App\Infrastructure\Time\SystemClock;
 use App\Infrastructure\Vies\FakeVatNumberValidator;
 use App\Infrastructure\Vies\ViesRestValidator;
@@ -30,8 +35,7 @@ use Illuminate\Support\ServiceProvider;
  * Conecta los puertos del dominio con sus adaptadores.
  *
  * El dominio solo conoce interfaces; aquí se decide qué implementación usa cada
- * entorno (constitución, principio III). Los adaptadores de PDF y almacenamiento
- * se registran cuando se implementan (T086).
+ * entorno (constitución, principio III).
  *
  * Los listeners de app/Listeners (p. ej. RecordDocumentEvent) no se registran
  * aquí: Laravel los descubre por el tipo de su método handle, y registrarlos
@@ -39,17 +43,23 @@ use Illuminate\Support\ServiceProvider;
  */
 final class AppServiceProvider extends ServiceProvider
 {
-    /** Valor de `invoice.vies.driver` que usa el VIES de mentira. */
+    /** Valor de `invoice.vies.driver` y `invoice.pdf.driver` que usa el adaptador de mentira. */
     private const string FAKE_DRIVER = 'fake';
 
     /** @var array<class-string, class-string> */
     public array $singletons = [
         Clock::class => SystemClock::class,
+        DocumentStorage::class => FlysystemDocumentStorage::class,
         TaxCalculator::class => SpanishTaxCalculator::class,
     ];
 
     public function register(): void
     {
+        $this->app->singleton(PdfRenderer::class, static fn (): PdfRenderer => match (config('invoice.pdf.driver')) {
+            self::FAKE_DRIVER => new FakePdfRenderer,
+            default => new BrowsershotRenderer,
+        });
+
         $this->app->singleton(VatNumberValidator::class, static fn (Application $app): VatNumberValidator => match (config('invoice.vies.driver')) {
             self::FAKE_DRIVER => FakeVatNumberValidator::valid(),
             default => new ViesRestValidator(

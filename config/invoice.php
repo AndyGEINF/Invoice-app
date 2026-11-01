@@ -77,11 +77,15 @@ return [
     ],
 
     'pdf' => [
+        // "browsershot" genera el PDF con Chromium; "fake" no necesita Chromium (tests).
+        'driver' => env('PDF_DRIVER', 'browsershot'),
         // Browsershot / Chromium. Si están vacíos, Browsershot busca los binarios en el PATH.
         'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
         'node_binary' => env('BROWSERSHOT_NODE_BINARY'),
         'npm_binary' => env('BROWSERSHOT_NPM_BINARY'),
         'timeout' => (int) env('BROWSERSHOT_TIMEOUT', 60),
+        // Dentro de un contenedor Chromium no puede usar su sandbox.
+        'no_sandbox' => (bool) env('BROWSERSHOT_NO_SANDBOX', false),
     ],
 
     'issuer' => [

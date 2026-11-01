@@ -19,6 +19,8 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scr
 # --- 2. Assets del frontend -------------------------------------------------
 FROM node:22-alpine AS assets
 WORKDIR /app
+# puppeteer solo hace falta en el worker, que usa el Chromium del sistema.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
