@@ -33,6 +33,8 @@ final class IssuerRequest extends FormRequest
 
     public const int COUNTRY_CODE_LENGTH = 2;
 
+    private const int KB_PER_MB = 1024;
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -89,6 +91,7 @@ final class IssuerRequest extends FormRequest
     {
         return [
             'logo.required' => 'Sube el logotipo: es obligatorio para emitir facturas.',
+            'logo.max' => sprintf('El logotipo pesa demasiado: el máximo son %d MB.', intdiv((int) config('invoice.issuer.logo_max_kb'), self::KB_PER_MB)),
             'brand_color.regex' => 'Elige un color con el formato #RRGGBB.',
         ];
     }

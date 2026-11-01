@@ -1,10 +1,9 @@
 import { Head, useForm } from '@inertiajs/react';
 import { ImageUp, Plus, Save, TriangleAlert } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { FieldError } from '@/components/documents/LineEditor';
 import { Field, FormSection } from '@/components/FormField';
-import { LogoCropDialog } from '@/components/LogoCropDialog';
 import { PageHeader } from '@/components/PageHeader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,6 +42,7 @@ interface Props {
 }
 
 const KB_PER_MB = 1024;
+const BYTES_PER_KB = 1024;
 
 /**
  * Datos del emisor: lo que aparece en todas las facturas. Arriba lo que se ve
@@ -77,26 +77,24 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
         [chosenLogoUrl],
     );
 
-    // Imagen elegida y aún sin recortar: abre la ventana de recorte.
-    const [cropSource, setCropSource] = useState<string | null>(null);
-
-    function chooseLogo(file: File | null) {
-        if (file) {
-            setCropSource(URL.createObjectURL(file));
-        }
-    }
-
-    function closeCrop() {
-        if (cropSource) {
-            URL.revokeObjectURL(cropSource);
+    /**
+     * Se comprueba el peso aquí, antes de enviar: un archivo muy grande no llega
+     * ni a la validación del servidor, PHP lo corta antes con una página de error.
+     */
+    function chooseLogo(file: File | undefined) {
+        if (!file) {
+            return;
         }
 
-        setCropSource(null);
-    }
+        if (file.size > options.logo_max_kb * BYTES_PER_KB) {
+            const megabytes = (file.size / (BYTES_PER_KB * KB_PER_MB)).toLocaleString('es-ES', { maximumFractionDigits: 1 });
+            form.setError('logo', `Esta imagen pesa ${megabytes} MB y el máximo son ${options.logo_max_kb / KB_PER_MB} MB. Prueba con una versión más pequeña.`);
 
-    function applyCroppedLogo(file: File) {
+            return;
+        }
+
+        form.clearErrors('logo');
         form.setData('logo', file);
-        closeCrop();
     }
 
     function submit(event: React.FormEvent) {
@@ -170,7 +168,8 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                                 className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed bg-muted/40 p-4 text-center text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                             >
                                 {preview ? (
-                                    <img src={preview} alt="Vista previa del logotipo" className="size-40 max-h-full rounded-full border bg-card object-contain" />
+                                    // Entero y con su forma: un logotipo puede ser horizontal, vertical o cuadrado.
+                                    <img src={preview} alt="Vista previa del logotipo" className="max-h-full max-w-full rounded-lg bg-white object-contain p-2" />
                                 ) : (
                                     <>
                                         <ImageUp className="size-6" aria-hidden />
@@ -184,12 +183,11 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
                                 accept="image/png,image/jpeg,image/svg+xml"
                                 className="sr-only"
                                 onChange={(event) => {
-                                    chooseLogo(event.target.files?.[0] ?? null);
+                                    chooseLogo(event.target.files?.[0]);
                                     // Vaciarlo deja volver a elegir el mismo archivo (si no, el navegador no avisa del cambio).
                                     event.target.value = '';
                                 }}
                             />
-                            <LogoCropDialog source={cropSource} onCancel={closeCrop} onConfirm={applyCroppedLogo} />
                             <p className="mt-1 text-xs text-muted-foreground">
                                 PNG, JPG o SVG, hasta {options.logo_max_kb / KB_PER_MB} MB. {preview ? 'Pulsa la imagen para cambiarla.' : ''}
                             </p>
@@ -285,8 +283,8 @@ const COLOR_WHEEL = 'conic-gradient(#ef4444, #eab308, #22c55e, #06b6d4, #3b82f6,
 /**
  * Cinco muestras más un color personalizado, el único editable: un aro con el
  * círculo cromático que abre el selector del sistema. Sin elegir muestra un
- * "+"; elegido, se rellena con ese color. El color tiñe la cabecera, los
- * títulos y el total del PDF.
+ * "+"; elegido, se rellena con ese color. El color tiñe las líneas y las
+ * etiquetas del PDF; el título y el total van en negro.
  */
 function BrandColorField({ value, swatches, error, onChange }: { value: string; swatches: string[]; error?: string; onChange: (color: string) => void }) {
     const isCustom = !swatches.includes(value.toLowerCase());
@@ -327,7 +325,7 @@ function BrandColorField({ value, swatches, error, onChange }: { value: string; 
                 </label>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-                Se usa en la cabecera, los títulos y el total de tus facturas. Las ya emitidas conservan el color con el que se emitieron.
+                Se usa en las líneas y las etiquetas de tus facturas. Las ya emitidas conservan el color con el que se emitieron.
             </p>
             <FieldError message={error} />
         </fieldset>

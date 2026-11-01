@@ -111,10 +111,10 @@ function IssuerAvatar({ className }: { className?: string }) {
         <Link
             href={SETTINGS.href}
             aria-label={`Datos de ${name}`}
-            className={cn('relative flex size-9 items-center justify-center overflow-hidden rounded-full border bg-card text-sm font-semibold text-primary', className)}
+            className={cn('relative flex size-9 items-center justify-center overflow-hidden rounded-lg border bg-card text-sm font-semibold text-primary', className)}
         >
-            {/* Sin margen: el logotipo ya viene recortado en círculo y llena el avatar. */}
-            {issuer.logoUrl ? <img src={issuer.logoUrl} alt="" className="size-full rounded-full bg-white object-contain" /> : name.charAt(0).toUpperCase()}
+            {/* Cuadrado y no círculo: un logotipo alargado se ve entero. Fondo blanco para que los oscuros no se pierdan. */}
+            {issuer.logoUrl ? <img src={issuer.logoUrl} alt="" className="size-full bg-white object-contain p-0.5" /> : name.charAt(0).toUpperCase()}
             <span
                 aria-hidden
                 className={cn('absolute right-0 bottom-0 size-2.5 rounded-full border-2 border-card', issuer.isComplete ? 'bg-success' : 'bg-warning')}

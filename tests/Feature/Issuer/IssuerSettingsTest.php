@@ -67,7 +67,7 @@ describe('validación', function () {
 
     it('rechaza un logotipo de más de 2 MB', function () {
         $this->put('/settings/issuer', issuerForm(['logo' => UploadedFile::fake()->create('logo.png', OVERSIZED_LOGO_KB, 'image/png')]))
-            ->assertSessionHasErrors('logo');
+            ->assertSessionHasErrors(['logo' => 'El logotipo pesa demasiado: el máximo son 2 MB.']);
     });
 
     it('rechaza un NIF con la letra de control mal', function () {

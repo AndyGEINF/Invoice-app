@@ -39,29 +39,18 @@ export function DocumentPaper({
         // La franja superior lleva el color de marca, como la cabecera del PDF.
         <article className={cn('rounded-lg border border-t-4 bg-card p-4 shadow-sm sm:p-6 md:p-10', className)} style={{ borderTopColor: paper.brandColor }}>
             <header className="flex flex-wrap items-start justify-between gap-6">
-                <div className="flex min-w-0 items-start gap-4">
-                    {/* El logotipo se recorta en círculo al subirlo: se muestra igual que en el recorte. */}
-                    {issuer.logo ? (
-                        <img src={issuer.logo} alt={`Logotipo de ${issuer.name}`} className="size-16 shrink-0 rounded-full border bg-white object-contain" />
-                    ) : (
-                        <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-accent text-xl font-semibold text-accent-foreground">
-                            {issuer.name.charAt(0).toUpperCase() || '?'}
-                        </span>
-                    )}
-                    <div className="min-w-0 text-sm">
-                        <p className="text-base font-semibold">{issuer.name || 'Tu empresa'}</p>
-                        {issuer.contact_name ? <p>{issuer.contact_name}</p> : null}
-                        {issuer.tax_id ? <p className="text-muted-foreground">NIF {issuer.tax_id}</p> : null}
-                        {issuer.address_lines.length > 0 ? <p className="text-muted-foreground">{issuer.address_lines.join(' · ')}</p> : null}
-                        {issuer.contact_lines.length > 0 ? <p className="text-muted-foreground">{issuer.contact_lines.join(' · ')}</p> : null}
-                    </div>
-                </div>
+                {/* Con su forma original, limitado en alto y ancho, como en el PDF. */}
+                {issuer.logo ? (
+                    <img src={issuer.logo} alt={`Logotipo de ${issuer.name}`} className="h-16 w-auto max-w-48 shrink-0 rounded-lg bg-white object-contain" />
+                ) : (
+                    <span className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-accent text-xl font-semibold text-accent-foreground">
+                        {issuer.name.charAt(0).toUpperCase() || '?'}
+                    </span>
+                )}
 
-                {/* ml-auto: si no cabe al lado del emisor y baja de línea, sigue pegado a la derecha. */}
+                {/* ml-auto: si no cabe al lado del logotipo y baja de línea, sigue pegado a la derecha. */}
                 <div className="ml-auto text-right">
-                    <p className="text-xl font-semibold tracking-tight" style={{ color: paper.brandColor }}>
-                        {title ?? paper.title}
-                    </p>
+                    <p className="text-xl font-bold tracking-tight">{title ?? paper.title}</p>
                     <div className="mt-1 flex justify-end">{status ?? (paper.number ? <p className="font-semibold">{paper.number}</p> : null)}</div>
                     <div className="mt-2 text-sm">
                         {dates ??
@@ -76,18 +65,27 @@ export function DocumentPaper({
 
             <hr className="my-6" />
 
-            <section className="flex flex-wrap items-start justify-between gap-6">
-                <div className="min-w-0 flex-1">
-                    <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">Cliente</p>
+            {/* Emisor a la izquierda y cliente a la derecha, como en el PDF. */}
+            <section className="grid gap-6 sm:grid-cols-2">
+                <div className="min-w-0 text-sm">
+                    <p className="text-base font-semibold">{issuer.name || 'Tu empresa'}</p>
+                    {issuer.contact_name ? <p>{issuer.contact_name}</p> : null}
+                    {issuer.tax_id ? <p className="text-muted-foreground">NIF {issuer.tax_id}</p> : null}
+                    {issuer.address_lines.length > 0 ? <p className="text-muted-foreground">{issuer.address_lines.join(' · ')}</p> : null}
+                    {issuer.contact_lines.length > 0 ? <p className="text-muted-foreground">{issuer.contact_lines.join(' · ')}</p> : null}
+                </div>
+                <div className="min-w-0">
+                    <p className="mb-1 text-xs font-medium tracking-wide uppercase" style={{ color: paper.brandColor }}>
+                        Cliente
+                    </p>
                     {customer ?? <PaperCustomer paper={paper} />}
                 </div>
-                <div className="text-right">
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Total</p>
-                    <p className="text-3xl font-semibold tracking-tight tabular-nums" style={{ color: paper.brandColor }}>
-                        {total ?? paper.total}
-                    </p>
-                </div>
             </section>
+
+            <div className="mt-6 text-right">
+                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Total</p>
+                <p className="text-3xl font-bold tracking-tight tabular-nums">{total ?? paper.total}</p>
+            </div>
 
             {paper.rectifies ? (
                 <p className="mt-6 rounded-lg border-l-4 border-warning bg-warning-soft px-4 py-2 text-sm text-warning-strong">{paper.rectifies}</p>
@@ -229,9 +227,7 @@ function PaperTotals({ paper }: { paper: PaperView }) {
             ))}
             <div className="mt-2 flex justify-between gap-4 border-t pt-3 text-base font-semibold">
                 <dt>Total</dt>
-                <dd className="tabular-nums" style={{ color: paper.brandColor }}>
-                    {paper.total}
-                </dd>
+                <dd className="tabular-nums">{paper.total}</dd>
             </div>
         </dl>
     );
