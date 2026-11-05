@@ -90,6 +90,11 @@ return [
         'backoff_seconds' => 30,
     ],
 
+    'email' => [
+        'tries' => 3,
+        'backoff_seconds' => 60,
+    ],
+
     'issuer' => [
         // Logotipo obligatorio para emitir.
         'logo_max_kb' => 2048,

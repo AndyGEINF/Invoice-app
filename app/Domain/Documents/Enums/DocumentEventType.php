@@ -30,7 +30,7 @@ enum DocumentEventType: string
             self::Updated => 'Modificado',
             self::Deleted => 'Borrado',
             self::Issued => 'Emitida',
-            self::Sent => 'Enviada por email',
+            self::Sent => 'Enviado por email',
             self::SendFailed => 'Fallo al enviar',
             self::MarkedPaid => 'Marcada como cobrada',
             self::UnmarkedPaid => 'Marca de cobro retirada',
