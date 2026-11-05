@@ -35,6 +35,11 @@ trait IsFiscalDocument
         return $this->status !== DocumentStatus::Draft;
     }
 
+    public function isSendable(): bool
+    {
+        return $this->isIssued();
+    }
+
     /**
      * Estado de cobro. Null mientras el documento es un borrador.
      */

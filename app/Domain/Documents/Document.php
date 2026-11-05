@@ -239,4 +239,16 @@ class Document extends Model
     {
         return true;
     }
+
+    /** Si ya se puede mandar por email. Un borrador nunca. */
+    public function isSendable(): bool
+    {
+        return false;
+    }
+
+    /** Nombre del PDF al descargarlo o adjuntarlo: Factura-F2026-0001.pdf. */
+    public function pdfFilename(): string
+    {
+        return preg_replace('/[^A-Za-z0-9-]/', '-', $this->type->label().'-'.$this->full_number).'.pdf';
+    }
 }

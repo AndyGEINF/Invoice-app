@@ -48,6 +48,11 @@ final class Quote extends Document
         return $this->status->isEditable();
     }
 
+    public function isSendable(): bool
+    {
+        return $this->status !== QuoteStatus::Draft;
+    }
+
     /** Enviado y con la validez superada: ya no se puede aceptar sin duplicarlo. */
     public function isExpired(?CarbonImmutable $today = null): bool
     {
