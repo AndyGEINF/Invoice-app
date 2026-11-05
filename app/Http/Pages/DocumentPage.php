@@ -51,6 +51,7 @@ final class DocumentPage
             'defaults' => self::defaults(),
             'events' => $document === null ? [] : self::events($document),
             'sends' => $document === null ? [] : self::sends($document),
+            'sendDefaults' => $document?->isSendable() ? self::sendDefaults($document) : null,
             'related' => $document === null ? null : self::related($document),
             'can' => self::abilities($type, $document),
             'series' => self::seriesOptions($type),
@@ -149,7 +150,9 @@ final class DocumentPage
             ->map(static fn (DocumentSend $send): array => [
                 'id' => $send->id,
                 'to' => $send->to,
+                'cc' => $send->cc ?? [],
                 'subject' => $send->subject,
+                'body' => $send->body,
                 'status' => $send->status->value,
                 'status_label' => $send->status->label(),
                 'error' => $send->error,
@@ -157,6 +160,29 @@ final class DocumentPage
                 'sent_at' => $send->sent_at?->toIso8601String(),
             ])
             ->all();
+    }
+
+    /**
+     * Con qué se abre el envío: el contacto del cliente y un mensaje que el
+     * usuario puede cambiar.
+     *
+     * @return array{to: list<string>, subject: string, body: string}
+     */
+    private static function sendDefaults(Document $document): array
+    {
+        $issuer = (string) Issuer::current()->legalName();
+        $number = $document->full_number;
+        $name = match ($document->type) {
+            DocumentType::Quote => 'el presupuesto',
+            DocumentType::Invoice => 'la factura',
+            DocumentType::CreditNote => 'la factura rectificativa',
+        };
+
+        return [
+            'to' => array_values(array_filter([$document->customer?->billingEmail()])),
+            'subject' => sprintf('%s %s de %s', $document->type->label(), $number, $issuer),
+            'body' => sprintf("Hola:\n\nTe adjunto %s %s por un total de %s.\n\nUn saludo,\n%s", $name, $number, $document->total->format(), $issuer),
+        ];
     }
 
     /**
@@ -191,9 +217,8 @@ final class DocumentPage
     }
 
     /**
-     * Acciones que el documento admite ahora. Las que dependen de historias
-     * posteriores (envío por email, rectificación) se activan al
-     * implementarlas; hasta entonces se ofrecen como no disponibles.
+     * Acciones que el documento admite ahora. La rectificación se activa al
+     * implementarla; hasta entonces se ofrece como no disponible.
      *
      * @return array<string, bool>
      */
@@ -210,7 +235,8 @@ final class DocumentPage
             'edit' => $editable,
             'issue' => $saved && $editable && $type->isFiscal(),
             'delete' => $saved && $editable,
-            'send' => false,
+            'send' => $document?->isSendable() ?? false,
+            'pdf' => $document?->hasNumber() ?? false,
             'rectify' => false,
             'convert' => $quoteStatus === QuoteStatus::Accepted,
             'quote_send' => $quoteStatus === QuoteStatus::Draft,
