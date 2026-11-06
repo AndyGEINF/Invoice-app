@@ -13,4 +13,9 @@ final class CannotSendDocument extends DomainException
     {
         return new self('Un borrador no se puede enviar por email: primero hay que emitirlo.');
     }
+
+    public static function mailNotConnected(): self
+    {
+        return new self('Tu correo no está conectado: conéctalo en Ajustes > Correo para poder enviar.');
+    }
 }

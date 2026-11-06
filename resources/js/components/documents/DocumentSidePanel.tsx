@@ -36,6 +36,8 @@ const POLL_INTERVAL_MS = 3000;
 /** Lo que cambia cuando la cola termina: el resto de la página no se vuelve a pedir. */
 const POLLED_PROPS = ['document', 'sends', 'events', 'can'];
 
+const MAIL_NOT_CONNECTED = 'Conecta tu correo en Ajustes > Correo para poder enviar.';
+
 /** Estado del borrador que se edita en el papel (solo en borradores). */
 export interface DraftState {
     isNew: boolean;
@@ -77,6 +79,8 @@ export function DocumentSidePanel({
 }) {
     const [sending, setSending] = useState<SendPrefill | null>(null);
     const openSend = sendDefaults && can.send ? () => setSending({ ...sendDefaults, cc: [] }) : null;
+    // Sin correo conectado el envío no llegaría: el botón se ve, pero bloqueado.
+    const sendBlocked = sendDefaults && !sendDefaults.mail_connected ? MAIL_NOT_CONNECTED : null;
     const waiting = sends.some((send) => send.status === 'queued') || (can.pdf && document?.pdf_available === false);
     const { start, stop } = usePoll(POLL_INTERVAL_MS, { only: POLLED_PROPS }, { autoStart: false });
 
@@ -111,10 +115,20 @@ export function DocumentSidePanel({
                 </TabsList>
 
                 <TabsContent value="general" className="px-1 pt-3">
-                    <GeneralTab type={type} document={document} total={total} can={can} related={related} series={series} draft={draft} onSend={openSend} />
+                    <GeneralTab
+                        type={type}
+                        document={document}
+                        total={total}
+                        can={can}
+                        related={related}
+                        series={series}
+                        draft={draft}
+                        onSend={openSend}
+                        sendBlocked={sendBlocked}
+                    />
                 </TabsContent>
                 <TabsContent value="sends" className="px-1 pt-3">
-                    <SendsTab document={document} sends={sends} onSend={openSend} onRetry={(send) => setSending(send)} />
+                    <SendsTab document={document} sends={sends} onSend={openSend} sendBlocked={sendBlocked} onRetry={(send) => setSending(send)} />
                 </TabsContent>
                 <TabsContent value="history" className="px-1 pt-3">
                     <HistoryTab events={events} />
@@ -124,16 +138,7 @@ export function DocumentSidePanel({
                 </TabsContent>
             </Tabs>
 
-            {sending && document ? (
-                <SendDialog
-                    onClose={() => setSending(null)}
-                    type={type}
-                    documentId={document.id}
-                    fullNumber={document.full_number}
-                    prefill={sending}
-                    mailConnected={sendDefaults?.mail_connected ?? true}
-                />
-            ) : null}
+            {sending && document ? <SendDialog onClose={() => setSending(null)} type={type} documentId={document.id} fullNumber={document.full_number} prefill={sending} /> : null}
         </aside>
     );
 }
@@ -147,6 +152,7 @@ function GeneralTab({
     series,
     draft,
     onSend,
+    sendBlocked,
 }: {
     type: DocumentTypeProps;
     document: DocumentDetail | null;
@@ -157,6 +163,8 @@ function GeneralTab({
     draft?: DraftState;
     /** Abre el envío por email; null si el documento aún no se puede enviar. */
     onSend: (() => void) | null;
+    /** Por qué no se puede enviar ahora (correo sin conectar); null si se puede. */
+    sendBlocked: string | null;
 }) {
     const [issuing, setIssuing] = useState(false);
     const [markingPaid, setMarkingPaid] = useState(false);
@@ -240,7 +248,14 @@ function GeneralTab({
 
                 {onSend ? (
                     // Primer envío de una factura: es lo siguiente que toca. Después pasa a secundario.
-                    <GuardedButton dirty={dirty} variant={document?.status === 'issued' ? 'default' : 'outline'} onClick={onSend} icon={Mail} label="Enviar por email" />
+                    <GuardedButton
+                        dirty={dirty}
+                        blockedReason={sendBlocked}
+                        variant={document?.status === 'issued' ? 'default' : 'outline'}
+                        onClick={onSend}
+                        icon={Mail}
+                        label="Enviar por email"
+                    />
                 ) : null}
 
                 {can.mark_paid && document ? (
@@ -340,6 +355,7 @@ function GeneralTab({
 function GuardedButton({
     dirty,
     requiresIssuer = false,
+    blockedReason = null,
     onClick,
     icon: Icon,
     label,
@@ -347,15 +363,19 @@ function GuardedButton({
 }: {
     dirty: boolean;
     requiresIssuer?: boolean;
+    /** Otro motivo por el que ahora no se puede (p. ej. el correo sin conectar). */
+    blockedReason?: string | null;
     onClick: () => void;
     icon: ComponentType<{ 'aria-hidden'?: boolean }>;
     label: string;
     variant?: 'default' | 'outline';
 }) {
     const { issuer } = usePage().props;
-    let reason: string | null = null;
+    let reason: string | null = blockedReason;
 
-    if (requiresIssuer && !issuer.isComplete) {
+    if (reason) {
+        // Ya hay motivo: es el que se muestra.
+    } else if (requiresIssuer && !issuer.isComplete) {
         reason = `Completa los datos de tu empresa: falta ${issuer.missing.map((field) => ISSUER_MISSING_LABELS[field]).join(', ')}.`;
     } else if (dirty) {
         reason = 'Guarda los cambios antes de continuar.';
@@ -431,11 +451,13 @@ function SendsTab({
     document,
     sends,
     onSend,
+    sendBlocked,
     onRetry,
 }: {
     document: DocumentDetail | null;
     sends: DocumentSendView[];
     onSend: (() => void) | null;
+    sendBlocked: string | null;
     onRetry: (send: SendPrefill) => void;
 }) {
     if (!document || !onSend) {
@@ -448,10 +470,19 @@ function SendsTab({
 
     return (
         <div className="flex flex-col gap-3">
-            <Button variant="outline" onClick={onSend}>
+            <Button variant="outline" onClick={onSend} disabled={sendBlocked !== null}>
                 <Mail aria-hidden />
                 {sends.length === 0 ? 'Enviar por email' : 'Enviar otra vez'}
             </Button>
+
+            {sendBlocked ? (
+                <p className="text-center text-sm text-muted-foreground">
+                    Tu correo no está conectado.{' '}
+                    <Link href="/settings/mail" className="font-medium text-primary underline underline-offset-2">
+                        Conéctalo en Ajustes
+                    </Link>
+                </p>
+            ) : null}
 
             {sends.length === 0 ? (
                 <EmptyTab>Todavía no se ha enviado por email.</EmptyTab>
@@ -466,7 +497,7 @@ function SendsTab({
                             <p className="mt-2 truncate font-medium">{send.subject}</p>
                             <p className="truncate text-xs text-muted-foreground">Para {send.to.join(', ')}</p>
                             {send.error ? <p className="mt-1 text-xs break-words text-destructive">{send.error}</p> : null}
-                            {send.status === 'failed' ? (
+                            {send.status === 'failed' && !sendBlocked ? (
                                 <Button variant="ghost" size="sm" className="mt-2 -ml-2" onClick={() => onRetry(send)}>
                                     <RotateCcw aria-hidden />
                                     Reintentar

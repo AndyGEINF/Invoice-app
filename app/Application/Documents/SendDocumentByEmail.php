@@ -9,6 +9,7 @@ use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentSend;
 use App\Domain\Documents\Exceptions\CannotSendDocument;
 use App\Domain\Shared\Contracts\Clock;
+use App\Infrastructure\Mail\ConfiguredMailer;
 use App\Jobs\SendDocumentEmailJob;
 use Illuminate\Support\Facades\DB;
 
@@ -19,12 +20,20 @@ use Illuminate\Support\Facades\DB;
  */
 final readonly class SendDocumentByEmail
 {
-    public function __construct(private Clock $clock) {}
+    public function __construct(
+        private ConfiguredMailer $mailer,
+        private Clock $clock,
+    ) {}
 
     public function __invoke(Document $document, SendData $data): DocumentSend
     {
         if (! $document->isSendable()) {
             throw CannotSendDocument::draft();
+        }
+
+        // Sin cuenta de correo el envío no llegaría a nadie: mejor no dejarlo salir.
+        if (! $this->mailer->isConnected()) {
+            throw CannotSendDocument::mailNotConnected();
         }
 
         return DB::transaction(function () use ($document, $data): DocumentSend {

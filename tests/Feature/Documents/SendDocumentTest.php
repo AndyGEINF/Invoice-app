@@ -30,6 +30,8 @@ beforeEach(function () {
     app()->instance(Clock::class, new FrozenClock(SEND_NOW));
     $this->travelTo(SEND_NOW);
     configuredIssuer();
+    // Como si el servidor tuviera SMTP: sin correo conectado no se deja enviar.
+    config(['mail.default' => 'smtp']);
 });
 
 /** @return array<string, mixed> */
@@ -71,6 +73,15 @@ describe('qué se puede enviar', function () {
 
         Mail::assertSent(DocumentMail::class);
         expect($quote->refresh()->status)->toBe(QuoteStatus::Sent);
+    });
+
+    it('sin correo conectado no se envía: 422 y no se registra nada', function () {
+        config(['mail.default' => 'log']);
+        $invoice = sendableInvoice();
+
+        $this->postJson("/invoices/{$invoice->id}/email", sendForm())->assertUnprocessable()->assertJsonValidationErrors('domain');
+
+        expect(DocumentSend::query()->count())->toBe(0);
     });
 
     it('exige al menos un destinatario válido, asunto y mensaje', function () {
