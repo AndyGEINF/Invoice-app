@@ -222,10 +222,23 @@ export interface DocumentEventView {
     created_at: string;
 }
 
+/** Con qué se abre el diálogo de envío: lo propuesto o lo de un envío fallido. */
+export interface SendPrefill {
+    to: string[];
+    cc: string[];
+    subject: string;
+    body: string;
+}
+
+/** Destinatario y texto que propone el servidor para un envío nuevo. */
+export type SendDefaults = Omit<SendPrefill, 'cc'>;
+
 export interface DocumentSendView {
     id: string;
     to: string[];
+    cc: string[];
     subject: string;
+    body: string;
     status: 'queued' | 'sent' | 'failed';
     status_label: string;
     error: string | null;
@@ -293,7 +306,10 @@ export interface DocumentAbilities {
     edit: boolean;
     issue: boolean;
     delete: boolean;
+    /** Enviar por email: documentos emitidos y presupuestos ya enviados. */
     send: boolean;
+    /** Tiene (o tendrá) PDF: cualquier documento con número. */
+    pdf: boolean;
     rectify: boolean;
     convert: boolean;
     /** Ciclo del presupuesto: marcar como enviado (le da número), aceptado o rechazado. */

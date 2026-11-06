@@ -1,11 +1,12 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { CircleCheck, CircleX, Copy, Eye, FileOutput, FileText, Save, Send, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
+import { Link, router, usePage, usePoll } from '@inertiajs/react';
+import { CircleCheck, CircleX, Copy, Download, Eye, FileOutput, FileText, Mail, RotateCcw, Save, Send, Trash2, Undo2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
 import { IssueDialog } from '@/components/documents/IssueDialog';
 import { FieldError } from '@/components/documents/LineEditor';
 import { PaidDialog } from '@/components/documents/PaidDialog';
+import { SendDialog } from '@/components/documents/SendDialog';
 import { ExpiredBadge, PaymentStatusBadge, StatusBadge } from '@/components/documents/StatusBadge';
 import { StatusPill } from '@/components/StatusPill';
 import { Button } from '@/components/ui/button';
@@ -24,8 +25,16 @@ import type {
     DocumentSendView,
     DocumentTypeProps,
     RelatedLink,
+    SendDefaults,
+    SendPrefill,
     SeriesOption,
 } from '@/types/documents';
+
+/** Cada cuánto se mira si ya salió un envío en cola o el PDF que se está generando. */
+const POLL_INTERVAL_MS = 3000;
+
+/** Lo que cambia cuando la cola termina: el resto de la página no se vuelve a pedir. */
+const POLLED_PROPS = ['document', 'sends', 'events', 'can'];
 
 /** Estado del borrador que se edita en el papel (solo en borradores). */
 export interface DraftState {
@@ -50,6 +59,7 @@ export function DocumentSidePanel({
     can,
     events,
     sends,
+    sendDefaults,
     related,
     series,
     draft,
@@ -60,10 +70,28 @@ export function DocumentSidePanel({
     can: DocumentAbilities;
     events: DocumentEventView[];
     sends: DocumentSendView[];
+    sendDefaults: SendDefaults | null;
     related: DocumentRelations | null;
     series: SeriesOption[];
     draft?: DraftState;
 }) {
+    const [sending, setSending] = useState<SendPrefill | null>(null);
+    const openSend = sendDefaults && can.send ? () => setSending({ ...sendDefaults, cc: [] }) : null;
+    const waiting = sends.some((send) => send.status === 'queued') || (can.pdf && document?.pdf_available === false);
+    const { start, stop } = usePoll(POLL_INTERVAL_MS, { only: POLLED_PROPS }, { autoStart: false });
+
+    // La cola trabaja aparte: mientras haya un envío o un PDF pendiente, se
+    // refresca el panel para ver el resultado sin recargar la página.
+    useEffect(() => {
+        if (waiting) {
+            start();
+        } else {
+            stop();
+        }
+
+        return stop;
+    }, [waiting, start, stop]);
+
     return (
         <aside aria-label="Panel del documento" className="flex flex-col gap-4 xl:sticky xl:top-6">
             <Tabs defaultValue="general" className="rounded-lg border bg-card p-3">
@@ -83,10 +111,10 @@ export function DocumentSidePanel({
                 </TabsList>
 
                 <TabsContent value="general" className="px-1 pt-3">
-                    <GeneralTab type={type} document={document} total={total} can={can} related={related} series={series} draft={draft} />
+                    <GeneralTab type={type} document={document} total={total} can={can} related={related} series={series} draft={draft} onSend={openSend} />
                 </TabsContent>
                 <TabsContent value="sends" className="px-1 pt-3">
-                    <SendsTab document={document} sends={sends} />
+                    <SendsTab document={document} sends={sends} onSend={openSend} onRetry={(send) => setSending(send)} />
                 </TabsContent>
                 <TabsContent value="history" className="px-1 pt-3">
                     <HistoryTab events={events} />
@@ -95,6 +123,8 @@ export function DocumentSidePanel({
                     <NotesTab type={type} document={document} />
                 </TabsContent>
             </Tabs>
+
+            {sending && document ? <SendDialog onClose={() => setSending(null)} type={type} documentId={document.id} fullNumber={document.full_number} prefill={sending} /> : null}
         </aside>
     );
 }
@@ -107,6 +137,7 @@ function GeneralTab({
     related,
     series,
     draft,
+    onSend,
 }: {
     type: DocumentTypeProps;
     document: DocumentDetail | null;
@@ -115,6 +146,8 @@ function GeneralTab({
     related: DocumentRelations | null;
     series: SeriesOption[];
     draft?: DraftState;
+    /** Abre el envío por email; null si el documento aún no se puede enviar. */
+    onSend: (() => void) | null;
 }) {
     const [issuing, setIssuing] = useState(false);
     const [markingPaid, setMarkingPaid] = useState(false);
@@ -196,6 +229,11 @@ function GeneralTab({
                     </>
                 ) : null}
 
+                {onSend ? (
+                    // Primer envío de una factura: es lo siguiente que toca. Después pasa a secundario.
+                    <GuardedButton dirty={dirty} variant={document?.status === 'issued' ? 'default' : 'outline'} onClick={onSend} icon={Mail} label="Enviar por email" />
+                ) : null}
+
                 {can.mark_paid && document ? (
                     <>
                         <Button onClick={() => setMarkingPaid(true)}>
@@ -245,6 +283,15 @@ function GeneralTab({
                     <Button variant="ghost" className="justify-start" onClick={() => post('duplicate')}>
                         <Copy aria-hidden />
                         Duplicar
+                    </Button>
+                ) : null}
+
+                {can.pdf && document ? (
+                    <Button variant="ghost" className="justify-start" asChild>
+                        <a href={`${documentUrl(type, document.id, 'pdf')}?download=1`}>
+                            <Download aria-hidden />
+                            {document.pdf_available ? 'Descargar PDF' : 'Preparando el PDF…'}
+                        </a>
                     </Button>
                 ) : null}
 
@@ -371,8 +418,18 @@ function RelatedLinks({ related }: { related: DocumentRelations | null }) {
     );
 }
 
-function SendsTab({ document, sends }: { document: DocumentDetail | null; sends: DocumentSendView[] }) {
-    if (!document || document.status === 'draft') {
+function SendsTab({
+    document,
+    sends,
+    onSend,
+    onRetry,
+}: {
+    document: DocumentDetail | null;
+    sends: DocumentSendView[];
+    onSend: (() => void) | null;
+    onRetry: (send: SendPrefill) => void;
+}) {
+    if (!document || !onSend) {
         return (
             <EmptyTab>
                 {document?.type === 'quote' ? 'Guarda y marca el presupuesto como enviado para poder mandarlo por email.' : 'Emite el documento para poder enviarlo al cliente.'}
@@ -380,24 +437,37 @@ function SendsTab({ document, sends }: { document: DocumentDetail | null; sends:
         );
     }
 
-    if (sends.length === 0) {
-        return <EmptyTab>Todavía no se ha enviado por email.</EmptyTab>;
-    }
-
     return (
-        <ul className="flex flex-col gap-2 text-sm">
-            {sends.map((send) => (
-                <li key={send.id} className="rounded-lg border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                        <StatusPill tone={send.status === 'sent' ? 'success' : send.status === 'failed' ? 'danger' : 'neutral'} label={send.status_label} />
-                        <span className="text-xs text-muted-foreground">{formatDateTime(send.sent_at ?? send.queued_at)}</span>
-                    </div>
-                    <p className="mt-2 truncate font-medium">{send.subject}</p>
-                    <p className="truncate text-xs text-muted-foreground">Para {send.to.join(', ')}</p>
-                    {send.error ? <p className="mt-1 text-xs text-destructive">{send.error}</p> : null}
-                </li>
-            ))}
-        </ul>
+        <div className="flex flex-col gap-3">
+            <Button variant="outline" onClick={onSend}>
+                <Mail aria-hidden />
+                {sends.length === 0 ? 'Enviar por email' : 'Enviar otra vez'}
+            </Button>
+
+            {sends.length === 0 ? (
+                <EmptyTab>Todavía no se ha enviado por email.</EmptyTab>
+            ) : (
+                <ul className="flex flex-col gap-2 text-sm">
+                    {[...sends].reverse().map((send) => (
+                        <li key={send.id} className="rounded-lg border p-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <StatusPill tone={send.status === 'sent' ? 'success' : send.status === 'failed' ? 'danger' : 'neutral'} label={send.status_label} />
+                                <span className="text-xs text-muted-foreground">{formatDateTime(send.sent_at ?? send.queued_at)}</span>
+                            </div>
+                            <p className="mt-2 truncate font-medium">{send.subject}</p>
+                            <p className="truncate text-xs text-muted-foreground">Para {send.to.join(', ')}</p>
+                            {send.error ? <p className="mt-1 text-xs break-words text-destructive">{send.error}</p> : null}
+                            {send.status === 'failed' ? (
+                                <Button variant="ghost" size="sm" className="mt-2 -ml-2" onClick={() => onRetry(send)}>
+                                    <RotateCcw aria-hidden />
+                                    Reintentar
+                                </Button>
+                            ) : null}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
     );
 }
 

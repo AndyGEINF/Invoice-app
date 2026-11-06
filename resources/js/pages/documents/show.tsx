@@ -26,6 +26,7 @@ import type {
     DraftDefaults,
     DraftForm,
     PaperView,
+    SendDefaults,
     SeriesOption,
 } from '@/types/documents';
 
@@ -39,6 +40,8 @@ interface Props {
     defaults: DraftDefaults;
     events: DocumentEventView[];
     sends: DocumentSendView[];
+    /** Solo si el documento ya se puede enviar por email. */
+    sendDefaults: SendDefaults | null;
     related: DocumentRelations | null;
     can: DocumentAbilities;
     series: SeriesOption[];
@@ -105,7 +108,20 @@ function toPayload(data: DraftData): DraftData {
     };
 }
 
-function DraftEditor({ type, document, paper, form: saved, customer: savedCustomer, defaults, can, events, sends, related, series }: Props & { form: DraftForm }) {
+function DraftEditor({
+    type,
+    document,
+    paper,
+    form: saved,
+    customer: savedCustomer,
+    defaults,
+    can,
+    events,
+    sends,
+    sendDefaults,
+    related,
+    series,
+}: Props & { form: DraftForm }) {
     const { invoiceConfig } = usePage().props;
     const form = useForm<DraftData>(toData(saved));
     const errors = form.errors as Record<string, string>;
@@ -299,6 +315,7 @@ function DraftEditor({ type, document, paper, form: saved, customer: savedCustom
                 can={can}
                 events={events}
                 sends={sends}
+                sendDefaults={sendDefaults}
                 related={related}
                 series={series}
                 draft={{ isNew, isDirty: form.isDirty, processing: form.processing, onSave: save, simplified: !customer?.tax_id }}
@@ -307,12 +324,22 @@ function DraftEditor({ type, document, paper, form: saved, customer: savedCustom
     );
 }
 
-function ReadOnlyDocument({ type, document, paper, can, events, sends, related, series }: Props) {
+function ReadOnlyDocument({ type, document, paper, can, events, sends, sendDefaults, related, series }: Props) {
     return (
         <div className="mx-auto grid max-w-[112rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
             <DocumentPaper paper={paper} className="min-w-0" />
 
-            <DocumentSidePanel type={type} document={document} total={paper.total} can={can} events={events} sends={sends} related={related} series={series} />
+            <DocumentSidePanel
+                type={type}
+                document={document}
+                total={paper.total}
+                can={can}
+                events={events}
+                sends={sends}
+                sendDefaults={sendDefaults}
+                related={related}
+                series={series}
+            />
         </div>
     );
 }
