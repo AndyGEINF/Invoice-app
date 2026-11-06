@@ -124,7 +124,16 @@ export function DocumentSidePanel({
                 </TabsContent>
             </Tabs>
 
-            {sending && document ? <SendDialog onClose={() => setSending(null)} type={type} documentId={document.id} fullNumber={document.full_number} prefill={sending} /> : null}
+            {sending && document ? (
+                <SendDialog
+                    onClose={() => setSending(null)}
+                    type={type}
+                    documentId={document.id}
+                    fullNumber={document.full_number}
+                    prefill={sending}
+                    mailConnected={sendDefaults?.mail_connected ?? true}
+                />
+            ) : null}
         </aside>
     );
 }

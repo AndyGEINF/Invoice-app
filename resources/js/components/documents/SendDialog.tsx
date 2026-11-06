@@ -1,8 +1,8 @@
-import { useForm } from '@inertiajs/react';
-import { Mail } from 'lucide-react';
+import { Link, useForm } from '@inertiajs/react';
+import { Mail, TriangleAlert } from 'lucide-react';
 
 import { FieldError } from '@/components/documents/LineEditor';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -39,12 +39,15 @@ export function SendDialog({
     documentId,
     fullNumber,
     prefill,
+    mailConnected,
 }: {
     onClose: () => void;
     type: DocumentTypeProps;
     documentId: string;
     fullNumber: string | null;
     prefill: SendPrefill;
+    /** Sin cuenta de correo conectada, el envío no llega: se avisa antes de mandarlo. */
+    mailConnected: boolean;
 }) {
     const form = useForm({
         to: prefill.to.join(', '),
@@ -66,6 +69,18 @@ export function SendDialog({
                     <DialogTitle>Enviar {fullNumber ?? type.label.toLowerCase()} por email</DialogTitle>
                     <DialogDescription>El PDF va adjunto. Si el cliente responde, la respuesta llega a tu email.</DialogDescription>
                 </DialogHeader>
+
+                {!mailConnected ? (
+                    <Alert className="border-warning/30 bg-warning-soft text-warning-strong">
+                        <TriangleAlert aria-hidden />
+                        <AlertTitle>Tu correo aún no está conectado: este envío no llegará al cliente.</AlertTitle>
+                        <AlertDescription className="text-current">
+                            <Link href="/settings/mail" className="font-medium underline underline-offset-2">
+                                Conéctalo en Ajustes
+                            </Link>
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
 
                 {errors.domain ? (
                     <Alert variant="destructive">

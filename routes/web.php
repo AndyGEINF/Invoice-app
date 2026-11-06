@@ -22,6 +22,7 @@ use App\Http\Controllers\Documents\PaidMarkerController;
 use App\Http\Controllers\Documents\QuoteTransitionController;
 use App\Http\Controllers\Documents\SendDocumentController;
 use App\Http\Controllers\Issuer\IssuerSettingsController;
+use App\Http\Controllers\Issuer\MailSettingsController;
 use App\Http\Controllers\Products\ProductArchiveController;
 use App\Http\Controllers\Products\ProductFormController;
 use App\Http\Controllers\Products\ProductIndexController;
@@ -39,6 +40,11 @@ Route::get('/dashboard', DashboardController::class)->name('dashboard');
 // multipart con POST + `_method=PUT` (Inertia lo hace solo).
 Route::get('/settings/issuer', [IssuerSettingsController::class, 'edit'])->name('settings.issuer');
 Route::put('/settings/issuer', [IssuerSettingsController::class, 'update'])->name('settings.issuer.update');
+
+// Cuenta de correo desde la que se envían los documentos.
+Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail');
+Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');
+Route::delete('/settings/mail', [MailSettingsController::class, 'destroy'])->name('settings.mail.destroy');
 
 // Clientes y catálogo. No se borran: se archivan (las facturas los referencian).
 Route::prefix('/customers')->name('customers.')->group(function (): void {

@@ -230,8 +230,8 @@ export interface SendPrefill {
     body: string;
 }
 
-/** Destinatario y texto que propone el servidor para un envío nuevo. */
-export type SendDefaults = Omit<SendPrefill, 'cc'>;
+/** Destinatario y texto que propone el servidor para un envío nuevo, y si el correo está conectado. */
+export type SendDefaults = Omit<SendPrefill, 'cc'> & { mail_connected: boolean };
 
 export interface DocumentSendView {
     id: string;

@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { FieldError } from '@/components/documents/LineEditor';
 import { Field, FormSection } from '@/components/FormField';
 import { PageHeader } from '@/components/PageHeader';
+import { SettingsTabs } from '@/components/SettingsTabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -111,6 +112,8 @@ export default function IssuerSettings({ settings: issuer, options }: Props) {
             <Head title="Datos de tu empresa" />
 
             <form onSubmit={submit} className="mx-auto max-w-4xl">
+                <SettingsTabs />
+
                 <PageHeader
                     title="Datos de tu empresa"
                     description="Aparecen en todas tus facturas y presupuestos."

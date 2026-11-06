@@ -20,6 +20,7 @@ use App\Http\Presenters\PrintableDocument;
 use App\Http\Resources\CustomerOption;
 use App\Http\Resources\DocumentDetail;
 use App\Http\Resources\DraftFormResource;
+use App\Infrastructure\Mail\ConfiguredMailer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -166,7 +167,10 @@ final class DocumentPage
      * Con qué se abre el envío: el contacto del cliente y un mensaje que el
      * usuario puede cambiar.
      *
-     * @return array{to: list<string>, subject: string, body: string}
+     * Lleva además si el correo está conectado: si no, el envío no llegará y el
+     * diálogo lo avisa.
+     *
+     * @return array{to: list<string>, subject: string, body: string, mail_connected: bool}
      */
     private static function sendDefaults(Document $document): array
     {
@@ -182,6 +186,7 @@ final class DocumentPage
             'to' => array_values(array_filter([$document->customer?->billingEmail()])),
             'subject' => sprintf('%s %s de %s', $document->type->label(), $number, $issuer),
             'body' => sprintf("Hola:\n\nTe adjunto %s %s por un total de %s.\n\nUn saludo,\n%s", $name, $number, $document->total->format(), $issuer),
+            'mail_connected' => app(ConfiguredMailer::class)->isConnected(),
         ];
     }
 

@@ -11,12 +11,13 @@ use App\Domain\Documents\Enums\SendStatus;
 use App\Domain\Shared\Contracts\Clock;
 use App\Events\DocumentEmailFailed;
 use App\Events\DocumentEmailSent;
+use App\Infrastructure\Mail\ConfiguredMailer;
+use App\Infrastructure\Mail\MailErrorMessage;
 use App\Mail\DocumentMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 /**
@@ -43,7 +44,7 @@ final class SendDocumentEmailJob implements ShouldQueue
         $this->afterCommit();
     }
 
-    public function handle(RenderDocumentPdf $render, DocumentStorage $storage, Clock $clock): void
+    public function handle(RenderDocumentPdf $render, DocumentStorage $storage, ConfiguredMailer $mailer, Clock $clock): void
     {
         $send = DocumentSend::query()->with('document')->find($this->sendId);
 
@@ -52,10 +53,9 @@ final class SendDocumentEmailJob implements ShouldQueue
         }
 
         $document = $render($send->document);
+        $mail = new DocumentMail($send, $storage->get((string) $document->pdf_path), $document->pdfFilename(), $mailer->fromAddress());
 
-        $message = Mail::to($send->to)
-            ->cc($send->cc ?? [])
-            ->send(new DocumentMail($send, $storage->get((string) $document->pdf_path), $document->pdfFilename()));
+        $message = $mailer->mailer()->to($send->to)->cc($send->cc ?? [])->send($mail);
 
         $send->forceFill([
             'status' => SendStatus::Sent,
@@ -74,7 +74,7 @@ final class SendDocumentEmailJob implements ShouldQueue
             return;
         }
 
-        $send->forceFill(['status' => SendStatus::Failed, 'error' => $exception->getMessage()])->save();
+        $send->forceFill(['status' => SendStatus::Failed, 'error' => MailErrorMessage::for($exception)])->save();
 
         DocumentEmailFailed::dispatch($send->id);
     }

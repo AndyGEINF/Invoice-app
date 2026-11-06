@@ -14,8 +14,8 @@ use Illuminate\Mail\Mailables\Envelope;
 
 /**
  * Documento enviado al cliente con su PDF adjunto. Sale de la cuenta de correo
- * configurada, con el nombre del emisor como remitente visible, y las respuestas
- * van al email del emisor.
+ * conectada en Ajustes (o la del servidor), con el nombre del emisor como
+ * remitente visible, y las respuestas van al email del emisor.
  *
  * No implementa ShouldQueue: ya lo manda un job, y si se encolara otra vez ese
  * job no se enteraría de que el envío ha fallado.
@@ -28,6 +28,7 @@ final class DocumentMail extends Mailable
         public readonly DocumentSend $send,
         private readonly string $pdf,
         private readonly string $filename,
+        private readonly string $fromAddress,
     ) {}
 
     public function envelope(): Envelope
@@ -36,7 +37,7 @@ final class DocumentMail extends Mailable
         $name = $issuer->legalName();
 
         return new Envelope(
-            from: new Address((string) config('mail.from.address'), $name),
+            from: new Address($this->fromAddress, $name),
             replyTo: filled($issuer->email) ? [new Address((string) $issuer->email, $name)] : [],
             subject: $this->send->subject,
         );

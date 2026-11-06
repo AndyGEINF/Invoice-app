@@ -10,7 +10,9 @@ use App\Domain\Documents\Enums\QuoteStatus;
 use App\Domain\Documents\Enums\SendStatus;
 use App\Domain\Documents\Invoice;
 use App\Domain\Documents\Quote;
+use App\Domain\Issuer\Enums\MailProvider;
 use App\Domain\Issuer\Issuer;
+use App\Domain\Issuer\MailSettings;
 use App\Domain\Shared\Contracts\Clock;
 use App\Infrastructure\Time\FrozenClock;
 use App\Jobs\SendDocumentEmailJob;
@@ -153,14 +155,22 @@ describe('fallo del correo', function () {
     it('deja el envío fallido con el error, apunta el fallo y no cambia el estado', function () {
         $invoice = sendableInvoice();
         $send = $invoice->sends()->create([...sendForm(), 'queued_at' => now()]);
-        Mail::shouldReceive('to')->andThrow(new TransportException('550 El buzón no existe'));
+        // Cuenta conectada a un puerto donde no escucha nadie: el servidor rechaza la conexión.
+        MailSettings::current()->fill([
+            'provider' => MailProvider::Custom,
+            'host' => '127.0.0.1',
+            'port' => 1,
+            'username' => 'facturas@demo.test',
+            'password' => 'secreta',
+            'from_address' => 'facturas@demo.test',
+        ])->save();
 
         expect(fn () => SendDocumentEmailJob::dispatchSync($send->id))->toThrow(TransportException::class);
 
         $send->refresh();
         $invoice->refresh();
         expect($send->status)->toBe(SendStatus::Failed)
-            ->and($send->error)->toBe('550 El buzón no existe')
+            ->and($send->error)->toStartWith('No se ha podido conectar con el servidor de correo.')
             ->and($invoice->status)->toBe(DocumentStatus::Issued)
             ->and($invoice->sent_at)->toBeNull()
             ->and($invoice->events()->where('event', DocumentEventType::SendFailed)->count())->toBe(1);
