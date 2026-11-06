@@ -14,9 +14,11 @@ use App\Domain\Documents\DocumentTax;
 use App\Domain\Documents\Enums\DocumentType;
 use App\Domain\Documents\Invoice;
 use App\Domain\Documents\Quote;
+use App\Domain\Issuer\Contracts\OutgoingMail;
 use App\Domain\Shared\Contracts\Clock;
 use App\Domain\Tax\SpanishTaxCalculator;
 use App\Domain\Tax\TaxCalculator;
+use App\Infrastructure\Mail\ConfiguredMailer;
 use App\Infrastructure\Pdf\BrowsershotRenderer;
 use App\Infrastructure\Pdf\FakePdfRenderer;
 use App\Infrastructure\Storage\FlysystemDocumentStorage;
@@ -50,6 +52,7 @@ final class AppServiceProvider extends ServiceProvider
     public array $singletons = [
         Clock::class => SystemClock::class,
         DocumentStorage::class => FlysystemDocumentStorage::class,
+        OutgoingMail::class => ConfiguredMailer::class,
         TaxCalculator::class => SpanishTaxCalculator::class,
     ];
 

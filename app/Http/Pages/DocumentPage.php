@@ -14,13 +14,13 @@ use App\Domain\Documents\Enums\QuoteStatus;
 use App\Domain\Documents\Invoice;
 use App\Domain\Documents\Quote;
 use App\Domain\Documents\Series;
+use App\Domain\Issuer\Contracts\OutgoingMail;
 use App\Domain\Issuer\Issuer;
 use App\Domain\Shared\Contracts\Clock;
 use App\Http\Presenters\PrintableDocument;
 use App\Http\Resources\CustomerOption;
 use App\Http\Resources\DocumentDetail;
 use App\Http\Resources\DraftFormResource;
-use App\Infrastructure\Mail\ConfiguredMailer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -186,7 +186,7 @@ final class DocumentPage
             'to' => array_values(array_filter([$document->customer?->billingEmail()])),
             'subject' => sprintf('%s %s de %s', $document->type->label(), $number, $issuer),
             'body' => sprintf("Hola:\n\nTe adjunto %s %s por un total de %s.\n\nUn saludo,\n%s", $name, $number, $document->total->format(), $issuer),
-            'mail_connected' => app(ConfiguredMailer::class)->isConnected(),
+            'mail_connected' => app(OutgoingMail::class)->isConnected(),
         ];
     }
 

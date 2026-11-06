@@ -8,8 +8,8 @@ use App\Application\Documents\Data\SendData;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\DocumentSend;
 use App\Domain\Documents\Exceptions\CannotSendDocument;
+use App\Domain\Issuer\Contracts\OutgoingMail;
 use App\Domain\Shared\Contracts\Clock;
-use App\Infrastructure\Mail\ConfiguredMailer;
 use App\Jobs\SendDocumentEmailJob;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class SendDocumentByEmail
 {
     public function __construct(
-        private ConfiguredMailer $mailer,
+        private OutgoingMail $mailer,
         private Clock $clock,
     ) {}
 

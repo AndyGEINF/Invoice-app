@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Mail;
 
+use App\Domain\Issuer\Contracts\OutgoingMail;
 use App\Domain\Issuer\MailSettings;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Support\Facades\Mail;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Mail;
  * que `Mail::fake()` lo intercepte en los tests. Se rehace en cada envío: un
  * worker que lleva horas en marcha no debe seguir con una cuenta ya cambiada.
  */
-final class ConfiguredMailer
+final class ConfiguredMailer implements OutgoingMail
 {
     private const string MAILER = 'issuer';
 
