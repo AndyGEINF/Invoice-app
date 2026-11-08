@@ -22,16 +22,21 @@ beforeEach(function () {
     $this->customer = Customer::factory()->create(['legal_name' => 'Cliente Original SL']);
 });
 
-/** Presupuesto en borrador creado por la web, como lo haría el usuario. */
+/**
+ * Presupuesto en borrador creado por la web, como lo haría el usuario.
+ *
+ * Se localiza por la redirección y no por "el más reciente": con el reloj
+ * congelado, dos presupuestos comparten `created_at`.
+ */
 function quoteDraft(array $overrides = []): Quote
 {
-    test()->post('/quotes', [
+    $response = test()->post('/quotes', [
         'customer_id' => test()->customer->id,
         'lines' => [['position' => 1, 'description' => 'Diseño web', 'quantity' => '1', 'unit_price' => '1000', 'vat_rate' => '21']],
         ...$overrides,
     ])->assertSessionHasNoErrors();
 
-    return Quote::query()->latest('created_at')->firstOrFail();
+    return Quote::query()->findOrFail(basename((string) parse_url((string) $response->headers->get('Location'), PHP_URL_PATH)));
 }
 
 function transition(Quote $quote, string $action): TestResponse
