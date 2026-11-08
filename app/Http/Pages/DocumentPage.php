@@ -222,8 +222,7 @@ final class DocumentPage
     }
 
     /**
-     * Acciones que el documento admite ahora. La rectificación se activa al
-     * implementarla; hasta entonces se ofrece como no disponible.
+     * Acciones que el documento admite ahora.
      *
      * @return array<string, bool>
      */
@@ -242,7 +241,7 @@ final class DocumentPage
             'delete' => $saved && $editable,
             'send' => $document?->isSendable() ?? false,
             'pdf' => $document?->hasNumber() ?? false,
-            'rectify' => false,
+            'rectify' => $document instanceof Invoice && $document->isIssued(),
             'convert' => $quoteStatus === QuoteStatus::Accepted,
             'quote_send' => $quoteStatus === QuoteStatus::Draft,
             'quote_accept' => $quoteStatus === QuoteStatus::Sent && ! $quote->isExpired(app(Clock::class)->today()),

@@ -20,6 +20,7 @@ use App\Http\Controllers\Documents\InternalNotesController;
 use App\Http\Controllers\Documents\IssueInvoiceController;
 use App\Http\Controllers\Documents\PaidMarkerController;
 use App\Http\Controllers\Documents\QuoteTransitionController;
+use App\Http\Controllers\Documents\RectifyInvoiceController;
 use App\Http\Controllers\Documents\SendDocumentController;
 use App\Http\Controllers\Issuer\IssuerSettingsController;
 use App\Http\Controllers\Issuer\MailSettingsController;
@@ -116,6 +117,9 @@ Route::name('documents.')->group(function () use ($allTypes, $quotes, $fiscalTyp
             Route::post('/paid', [PaidMarkerController::class, 'store'])->whereIn('type', $fiscalTypes)->name('paid.store');
             Route::delete('/paid', [PaidMarkerController::class, 'destroy'])->whereIn('type', $fiscalTypes)->name('paid.destroy');
             Route::post('/duplicate', DuplicateDocumentController::class)->whereIn('type', $creatableTypes)->name('duplicate');
+
+            // Corregir una factura emitida: nace una rectificativa en borrador.
+            Route::post('/rectify', RectifyInvoiceController::class)->whereIn('type', [DocumentType::Invoice->routeSegment()])->name('rectify');
 
             // Ciclo del presupuesto: enviar, aceptar, rechazar y convertir en factura.
             Route::post('/convert', ConvertQuoteController::class)->whereIn('type', $quotes)->name('convert');
