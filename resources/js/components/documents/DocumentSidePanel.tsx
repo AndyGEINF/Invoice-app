@@ -1,11 +1,12 @@
 import { Link, router, usePage, usePoll } from '@inertiajs/react';
-import { CircleCheck, CircleX, Copy, Download, Eye, FileOutput, FileText, Mail, RotateCcw, Save, Send, Trash2, Undo2 } from 'lucide-react';
+import { CircleCheck, CircleX, Copy, Download, Eye, FileOutput, FilePen, FileText, Mail, RotateCcw, Save, Send, Trash2, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
 import { IssueDialog } from '@/components/documents/IssueDialog';
 import { FieldError } from '@/components/documents/LineEditor';
 import { PaidDialog } from '@/components/documents/PaidDialog';
+import { RectifyDialog } from '@/components/documents/RectifyDialog';
 import { SendDialog } from '@/components/documents/SendDialog';
 import { ExpiredBadge, PaymentStatusBadge, StatusBadge } from '@/components/documents/StatusBadge';
 import { StatusPill } from '@/components/StatusPill';
@@ -168,6 +169,7 @@ function GeneralTab({
 }) {
     const [issuing, setIssuing] = useState(false);
     const [markingPaid, setMarkingPaid] = useState(false);
+    const [rectifying, setRectifying] = useState(false);
     const isQuote = type.value === 'quote';
     const dirty = draft?.isDirty ?? false;
 
@@ -207,6 +209,8 @@ function GeneralTab({
                     {document.valid_until ? <DetailRow label="Válido hasta" value={formatDate(document.valid_until)} /> : null}
                     {document.due_date ? <DetailRow label="Vencimiento" value={formatDate(document.due_date)} /> : null}
                     {document.invoice_type_label ? <DetailRow label="Tipo" value={document.invoice_type_label} /> : null}
+                    {document.rectification_type_label ? <DetailRow label="Rectificación" value={document.rectification_type_label} /> : null}
+                    {document.rectification_reason ? <DetailRow label="Motivo" value={document.rectification_reason} /> : null}
                     {document.series_code ? <DetailRow label="Serie" value={document.series_code} /> : null}
                     {document.paid_at ? <DetailRow label="Cobrada el" value={formatDate(document.paid_at)} /> : null}
                     {document.paid_at && document.paid_note ? <DetailRow label="Nota del cobro" value={document.paid_note} /> : null}
@@ -301,6 +305,16 @@ function GeneralTab({
                         <CircleX aria-hidden />
                         Marcar como rechazado
                     </Button>
+                ) : null}
+
+                {can.rectify && document ? (
+                    <>
+                        <Button variant="ghost" className="justify-start" onClick={() => setRectifying(true)}>
+                            <FilePen aria-hidden />
+                            Rectificar
+                        </Button>
+                        <RectifyDialog open={rectifying} onOpenChange={setRectifying} type={type} documentId={document.id} fullNumber={document.full_number} />
+                    </>
                 ) : null}
 
                 {can.duplicate && document ? (

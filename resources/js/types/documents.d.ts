@@ -8,6 +8,9 @@ export type DocumentTypeValue = 'quote' | 'invoice' | 'credit_note';
 
 export type FiscalStatus = 'draft' | 'issued' | 'sent' | 'rectified';
 
+/** Forma de rectificar: S sustitución, I diferencias (como la AEAT). */
+export type RectificationType = 'S' | 'I';
+
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'converted';
 
 export type DocumentStatus = FiscalStatus | QuoteStatus;
@@ -201,6 +204,9 @@ export type DocumentDetail = {
     valid_until: string | null;
     invoice_type: 'F1' | 'F2' | 'R1' | 'R4' | 'R5' | null;
     invoice_type_label: string | null;
+    rectification_type: RectificationType | null;
+    rectification_type_label: string | null;
+    rectification_reason: string | null;
     customer: { id: string; legal_name: string; tax_id: string | null } | null;
     issuer_snapshot: PartySnapshot | null;
     customer_snapshot: PartySnapshot | null;

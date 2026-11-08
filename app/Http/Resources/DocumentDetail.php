@@ -48,6 +48,9 @@ final class DocumentDetail extends JsonResource
             'valid_until' => self::date($document->valid_until),
             'invoice_type' => $document->invoice_type?->value,
             'invoice_type_label' => $document->invoice_type?->label(),
+            'rectification_type' => $document->rectification_type?->value,
+            'rectification_type_label' => $document->rectification_type?->label(),
+            'rectification_reason' => $document->rectification_reason,
             'customer' => $customer === null ? null : [
                 'id' => $customer->id,
                 'legal_name' => $customer->legal_name,
