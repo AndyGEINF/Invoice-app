@@ -44,6 +44,12 @@ final readonly class Quantity implements Stringable
         return $this->toDecimal()->isNegative();
     }
 
+    /** La misma cantidad con el signo cambiado, para anular una línea en una rectificativa. */
+    public function negate(): self
+    {
+        return self::signed($this->toDecimal()->negate());
+    }
+
     private static function toDecimalValue(Decimal|string|int $quantity): Decimal
     {
         return $quantity instanceof Decimal ? $quantity : Decimal::of($quantity);

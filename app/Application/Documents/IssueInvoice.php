@@ -7,6 +7,7 @@ namespace App\Application\Documents;
 use App\Domain\Documents\CreditNote;
 use App\Domain\Documents\Document;
 use App\Domain\Documents\Enums\DocumentStatus;
+use App\Domain\Documents\Exceptions\CannotRectifyInvoice;
 use App\Domain\Documents\Exceptions\DocumentHasNoLines;
 use App\Domain\Documents\Exceptions\DocumentIsImmutable;
 use App\Domain\Documents\Exceptions\IssueDateBeforeSeriesLast;
@@ -64,6 +65,10 @@ final readonly class IssueInvoice
 
             if (! $document->lines()->exists()) {
                 throw DocumentHasNoLines::cannotIssue();
+            }
+
+            if ($document instanceof CreditNote) {
+                $this->assertOriginalIssued($document);
             }
 
             // Totales frescos: el motor comprueba además las causas de exención.
@@ -137,6 +142,16 @@ final readonly class IssueInvoice
 
         if ($issueDate->lessThan($lastIssueDate)) {
             throw IssueDateBeforeSeriesLast::for($series->code, $issueDate, $lastIssueDate);
+        }
+    }
+
+    /** Una rectificativa solo puede corregir una factura que ya existe para Hacienda. */
+    private function assertOriginalIssued(CreditNote $creditNote): void
+    {
+        $original = $creditNote->rectifies;
+
+        if (! $original instanceof Invoice || ! $original->isIssued()) {
+            throw CannotRectifyInvoice::originalNotIssued();
         }
     }
 
