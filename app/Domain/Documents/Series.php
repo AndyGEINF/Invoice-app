@@ -110,6 +110,31 @@ final class Series extends Model
         return $this->resets_yearly ? $issueYear : self::NO_FISCAL_YEAR;
     }
 
+    /**
+     * Número que recibirá el próximo documento emitido en ese año. Una serie con
+     * reinicio anual que aún no ha emitido en él empezará por el 1, como hace
+     * {@see SeriesNumberAllocator}.
+     */
+    public function nextNumberIn(int $year): int
+    {
+        if ($this->resets_yearly && ($this->year === null || $this->year < $year)) {
+            return DocumentNumber::FIRST_NUMBER;
+        }
+
+        return $this->next_number;
+    }
+
+    /** Número completo del próximo documento de ese año: F2026-0004. */
+    public function nextFullNumberIn(int $year): string
+    {
+        return DocumentNumber::of(
+            $this->prefix,
+            $this->nextNumberIn($year),
+            $this->padding,
+            $this->resets_yearly ? $year : null,
+        )->full();
+    }
+
     /** Si tiene algún documento con número, su prefijo y su código quedan fijados. */
     public function hasIssuedDocuments(): bool
     {
