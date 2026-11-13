@@ -48,6 +48,8 @@ export interface SeriesOption {
     code: string;
     prefix: string;
     is_default: boolean;
+    /** Número que saldrá si se emite ahora en esta serie: F2026-0004. */
+    next_full_number: string;
 }
 
 export interface DocumentRow {

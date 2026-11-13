@@ -72,6 +72,8 @@ final class DocumentPage
     /** @return list<array<string, mixed>> */
     public static function seriesOptions(DocumentType $type): array
     {
+        $year = app(Clock::class)->today()->year;
+
         return Series::query()
             ->forType($type)
             ->where('is_active', true)
@@ -83,6 +85,7 @@ final class DocumentPage
                 'code' => $series->code,
                 'prefix' => $series->prefix,
                 'is_default' => $series->is_default,
+                'next_full_number' => $series->nextFullNumberIn($year),
             ])
             ->all();
     }

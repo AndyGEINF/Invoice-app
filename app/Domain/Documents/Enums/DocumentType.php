@@ -25,6 +25,15 @@ enum DocumentType: string
         };
     }
 
+    public function pluralLabel(): string
+    {
+        return match ($this) {
+            self::Quote => 'Presupuestos',
+            self::Invoice => 'Facturas',
+            self::CreditNote => 'Rectificativas',
+        };
+    }
+
     /** Segmento de URL del recurso: /quotes, /invoices, /credit-notes. */
     public function routeSegment(): string
     {

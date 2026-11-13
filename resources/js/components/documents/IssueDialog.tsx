@@ -87,7 +87,7 @@ export function IssueDialog({
                                 <SelectContent>
                                     {series.map((item) => (
                                         <SelectItem key={item.id} value={item.id}>
-                                            {item.code} · {item.prefix}
+                                            {item.code} (próximo número {item.next_full_number})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

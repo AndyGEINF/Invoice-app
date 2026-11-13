@@ -28,6 +28,7 @@ use App\Http\Controllers\Products\ProductArchiveController;
 use App\Http\Controllers\Products\ProductFormController;
 use App\Http\Controllers\Products\ProductIndexController;
 use App\Http\Controllers\Products\ProductSearchController;
+use App\Http\Controllers\Series\SeriesController;
 use Illuminate\Support\Facades\Route;
 
 // La aplicación no tiene login: ninguna ruta usa middleware de autenticación
@@ -46,6 +47,15 @@ Route::put('/settings/issuer', [IssuerSettingsController::class, 'update'])->nam
 Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail');
 Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');
 Route::delete('/settings/mail', [MailSettingsController::class, 'destroy'])->name('settings.mail.destroy');
+
+// Series de numeración. Con documentos no se borran: se desactivan (FR-032).
+Route::get('/settings/series', [SeriesController::class, 'index'])->name('settings.series');
+Route::post('/settings/series', [SeriesController::class, 'store'])->name('settings.series.store');
+Route::prefix('/settings/series/{series}')->whereUuid('series')->group(function (): void {
+    Route::put('/', [SeriesController::class, 'update'])->name('settings.series.update');
+    Route::post('/toggle', [SeriesController::class, 'toggle'])->name('settings.series.toggle');
+    Route::delete('/', [SeriesController::class, 'destroy'])->name('settings.series.destroy');
+});
 
 // Clientes y catálogo. No se borran: se archivan (las facturas los referencian).
 Route::prefix('/customers')->name('customers.')->group(function (): void {

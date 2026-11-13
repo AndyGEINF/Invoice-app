@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 const TABS = [
     { href: '/settings/issuer', label: 'Tu empresa' },
     { href: '/settings/mail', label: 'Correo' },
+    { href: '/settings/series', label: 'Series' },
 ];
 
 /** Secciones de Ajustes, con el mismo aspecto que las pestañas del documento. */
